@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Finance Application</title>
+        <link href="https://fonts.googleapis.com/css2?family=
+        Playfair+Display:wght@500;700&family=
+        DM+Sans:wght@300;400;500;600&family=DM+Mono:
+        wght@400;500&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="style.css">
+    </head>
+    <body>
+        <div class="login-card">
+    <div class="logo-area">
+      <div class="logo-mark">🏛</div>
+      <div class="logo-name">Finance Application</div>
+      <div class="logo-sub">Enterprise Portal</div>
+    </div>
+        <div class="login-header">
+            <h2>Welcome Back</h2>
+            <p>Please login to your account</p>
+        </div>
+        <div class="form-group">
+            <label>Username</label>
+            <input type="text" placeholder="Enter your username" autocomplete="username">
+        </div>
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password" placeholder="Enter your password" autocomplete="current-password">
+            <span class="input-icon" onclick="togglePW()">👁</span>
+        </div>
+        <button class="btn btn-primary" onclick="dologin()">Sign In</button>
+        <button class="btn btn-secondary">Forgot Password</button>
+        <div class="divider">or</div>
+        <button class="btn btn-secondary">Create New User Account</button>
+        <script>
+  function togglePw() {
+    const inp = document.getElementById('loginPw');
+    const icon = document.querySelector('.input-icon');
+    if (inp.type === 'password') { inp.type = 'text'; icon.textContent = '🙈'; }
+    else { inp.type = 'password'; icon.textContent = '👁'; }
+  }
+
+  function doLogin() {
+    const u   = document.getElementById('loginUser').value;
+    const p   = document.getElementById('loginPw').value;
+    const err = document.getElementById('loginError');
+    if (!u || !p) { err.style.display = 'block'; return; }
+    err.style.display = 'none';
+    alert('Login successful! In the real app this would redirect to dashboard.html');
+  }
+</script>
+    </body>
+</html>
