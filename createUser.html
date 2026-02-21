@@ -1,0 +1,62 @@
+<!-- createUser.html -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Create User</title>
+</head>
+<body>
+
+<header>
+  <img src="assets/logo.png" alt="Logo" width="120">
+  <div>
+    <span>Username: AdminUser</span>
+    <img src="assets/userAdmin.png" alt="User Picture" width="40" height="40">
+	<a href="login.html">Logout</a>
+  </div>
+</header>
+
+<main>
+  <h1>Create User</h1>
+
+  <form action="#" method="post">
+    <label for="firstname">First Name</label><br>
+    <input type="text" id="firstname" name="firstname" required><br><br>
+
+    <label for="lastname">Last Name</label><br>
+    <input type="text" id="lastname" name="lastname" required><br><br>
+
+    <label for="email">Email Address</label><br>
+    <input type="email" id="email" name="email" required><br><br>
+
+    <label for="userid">User ID</label><br>
+    <input type="text" id="userid" name="userid" required><br><br>
+
+    <label for="username">Login Userame</label><br>
+    <input type="text" id="username" name="username" required><br><br>
+
+    <label for="role">Role</label><br>
+    <select id="role" name="role" required>
+      <option value="">Select a role</option>
+      <option value="administrator">Administrator</option>
+      <option value="manager">Manager</option>
+      <option value="accountant">Accountant</option>
+    </select><br><br>
+
+    <label for="status">Status</label><br>
+    <select id="status" name="status" required>
+      <option value="active">Active</option>
+      <option value="inactive">Inactive</option>
+    </select><br><br>
+
+    <label for="password">Temporary Password</label><br>
+    <input type="password" id="password" name="password" minlength="8" required><br><br>
+
+    <button type="submit">Create User</button>
+    <a href="adminDashboard.html">Cancel</a>
+  </form>
+</main>
+
+</body>
+</html>
