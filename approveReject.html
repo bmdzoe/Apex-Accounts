@@ -23,23 +23,24 @@
   <h1>Approve / Reject Request</h1>
 
   <form action="#" method="post">
-    <label for="requestid">Request ID</label><br>
-    <input type="text" id="requestid" name="requestid" required><br><br>
 
-    <label for="firstname">First Name</label><br>
-    <input type="text" id="firstname" name="firstname" required><br><br>
+    <label>Request ID</label><br>
+    <input type="text" value="R-001" disabled><br><br>
 
-    <label for="lastname">Last Name</label><br>
-    <input type="text" id="lastname" name="lastname" required><br><br>
+    <label>First Name</label><br>
+    <input type="text" value="Jane" disabled><br><br>
 
-    <label for="email">Email Address</label><br>
-    <input type="email" id="email" name="email" required><br><br>
+    <label>Last Name</label><br>
+    <input type="text" value="Doe" disabled><br><br>
 
-    <label for="dob">Date of Birth</label><br>
-    <input type="date" id="dob" name="dob" required><br><br>
+    <label>Email Address</label><br>
+    <input type="email" value="jane@example.com" disabled><br><br>
 
-    <label for="address">Address</label><br>
-    <input type="text" id="address" name="address" required><br><br>
+    <label>Date of Birth</label><br>
+    <input type="date" value="2000-01-01" disabled><br><br>
+
+    <label>Address</label><br>
+    <input type="text" value="123 Main St" disabled><br><br>
 
     <label for="decision">Decision</label><br>
     <select id="decision" name="decision" required>
@@ -48,8 +49,15 @@
       <option value="reject">Reject</option>
     </select><br><br>
 
+    <label for="message">Email Message</label><br>
+    <textarea id="message" name="message" rows="6" required></textarea><br><br>
+
+    <label for="loginlink">Login Link (if approved)</label><br>
+    <input type="url" id="loginlink" name="loginlink" value="login.html"><br><br>
+
     <button type="submit">Submit</button>
     <a href="accessRequests.html">Cancel</a>
+
   </form>
 </main>
 
