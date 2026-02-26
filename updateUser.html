@@ -1,0 +1,52 @@
+<!-- updateUser.html -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Update User</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <img src="assets/logo.png" alt="Logo">
+  <div>
+    <span>Username: AdminUser</span>
+    <img src="assets/userAdmin.png" alt="User Picture" width="40" height="40">
+	<a href="login.html">Logout</a>
+  </div>
+</header>
+
+<main>
+  <h1>Update User</h1>
+
+  <form action="#" method="post">
+    <label for="userid">User ID</label><br>
+    <input type="text" id="userid" name="userid" required><br><br>
+
+    <label for="firstname">First Name</label><br>
+    <input type="text" id="firstname" name="firstname"><br><br>
+
+    <label for="lastname">Last Name</label><br>
+    <input type="text" id="lastname" name="lastname"><br><br>
+
+    <label for="email">Email Address</label><br>
+    <input type="email" id="email" name="email"><br><br>
+
+    <label for="role">Role</label><br>
+    <select id="role" name="role">
+      <option value="">No change</option>
+      <option value="administrator">Administrator</option>
+      <option value="manager">Manager</option>
+      <option value="accountant">Accountant</option>
+    </select><br><br>
+
+    <button type="submit">Update User</button>
+    <a href="adminDashboard.html">Cancel</a>
+  </form>
+</main>
+
+</body>
+</html>

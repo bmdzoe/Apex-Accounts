@@ -1,0 +1,41 @@
+<!-- suspendUser.html -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Suspend User</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <img src="assets/logo.png" alt="Logo">
+  <div>
+    <span>Username: AdminUser</span>
+    <img src="assets/userAdmin.png" alt="User Picture" width="40" height="40">
+	<a href="login.html">Logout</a>
+  </div>
+</header>
+
+<main>
+  <h1>Suspend User</h1>
+
+  <form action="#" method="post">
+    <label for="userid">User ID</label><br>
+    <input type="text" id="userid" name="userid" required><br><br>
+
+    <label for="startdate">Start Date</label><br>
+    <input type="date" id="startdate" name="startdate" required><br><br>
+
+    <label for="enddate">Expiry Date</label><br>
+    <input type="date" id="enddate" name="enddate" required><br><br>
+
+    <button type="submit">Suspend</button>
+    <a href="adminDashboard.html">Cancel</a>
+  </form>
+</main>
+
+</body>
+</html>
