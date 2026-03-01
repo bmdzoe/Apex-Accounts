@@ -21,31 +21,91 @@
 <main>
   <h1>User Profile</h1>
 
-  <form action="#" method="post">
+  <form id="profileForm">
 
     <label>User ID</label><br>
-    <input type="text" value="U1001" disabled><br><br>
+    <input type="text" id="userId" disabled><br><br>
 
     <label>First Name</label><br>
-    <input type="text" value="Jane"><br><br>
+    <input type="text" id="firstName"><br><br>
 
     <label>Last Name</label><br>
-    <input type="text" value="Doe"><br><br>
+    <input type="text" id="lastName"><br><br>
 
     <label>Email Address</label><br>
-    <input type="email" value="jane@example.com"><br><br>
+    <input type="email" id="email" disabled><br><br>
 
     <label>Address</label><br>
-    <input type="text" value="123 Main St"><br><br>
+    <input type="text" id="address"><br><br>
 
     <label>Date of Birth</label><br>
-    <input type="date" value="2000-01-01"><br><br>
+    <input type="date" id="dob"><br><br>
 
     <button type="submit">Save Changes</button>
     <a href="accountantDashboard.html">Cancel</a>
 
   </form>
+  </form>
 </main>
+
+<script type="module">
+  import { auth, db } from './firebase-config.js';
+  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  import { doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+  const profileForm = document.getElementById('profileForm');
+  let currentUserUid = null;
+
+  // loading user data
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      currentUserUid = user.uid;
+      const docRef = doc(db, "users", user.uid);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const userData = docSnap.data();
+        
+       // getting database info
+        document.getElementById('userId').value = user.uid;
+        document.getElementById('email').value = user.email;
+        document.getElementById('firstName').value = userData.firstName || "";
+        document.getElementById('lastName').value = userData.lastName || "";
+        document.getElementById('address').value = userData.address || "";
+        document.getElementById('dob').value = userData.dob || "";
+        
+     
+      }
+    } else {
+     
+      window.location.href = "login.html";
+    }
+  });
+
+  // new data will be saved on submit
+  profileForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    if (currentUserUid) {
+      try {
+        const docRef = doc(db, "users", currentUserUid);
+        
+       
+        await updateDoc(docRef, {
+          firstName: document.getElementById('firstName').value,
+          lastName: document.getElementById('lastName').value,
+          address: document.getElementById('address').value,
+          dob: document.getElementById('dob').value
+        });
+
+        alert("Profile updated successfully!");
+      } catch (error) {
+        console.error("Error updating profile: ", error);
+        alert("Failed to save changes.");
+      }
+    }
+  });
+</script>
 
 </body>
 </html>
