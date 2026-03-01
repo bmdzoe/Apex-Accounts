@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Reset Password</title>
+  <title>User Profile</title>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
@@ -19,29 +19,31 @@
 </header>
 
 <main>
-  <h1>Profile</h1>
+  <h1>User Profile</h1>
 
   <form action="#" method="post">
-    <label for="userid">User ID</label><br>
-    <input type="text" id="userid" name="userid" required><br><br>
 
-    <label for="firstname">First Name</label><br>
-    <input type="text" id="firstname" name="firstname" required><br><br>
+    <label>User ID</label><br>
+    <input type="text" value="U1001" disabled><br><br>
 
-    <label for="lastname">Last Name</label><br>
-    <input type="text" id="lastname" name="lastname" required><br><br>
+    <label>First Name</label><br>
+    <input type="text" value="Jane"><br><br>
 
-    <label for="email">Email Address</label><br>
-    <input type="email" id="email" name="email" required><br><br>
+    <label>Last Name</label><br>
+    <input type="text" value="Doe"><br><br>
 
-    <label for="address">Address</label><br>
-    <input type="text" id="address" name="address" required><br><br>
+    <label>Email Address</label><br>
+    <input type="email" value="jane@example.com"><br><br>
 
-    <label for="dob">Date of Birth</label><br>
-    <input type="date" id="dob" name="dob" required><br><br>
+    <label>Address</label><br>
+    <input type="text" value="123 Main St"><br><br>
 
-    <button type="submit">Save</button>
-    <a href="login.html">Back</a>
+    <label>Date of Birth</label><br>
+    <input type="date" value="2000-01-01"><br><br>
+
+    <button type="submit">Save Changes</button>
+    <a href="accountantDashboard.html">Cancel</a>
+
   </form>
 </main>
 
