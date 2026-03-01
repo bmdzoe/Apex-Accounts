@@ -3,34 +3,48 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Login</title>
+ <title>Apex Accounts - Login</title>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="auth-page">
 
-<header>
-  <img src="assets/logo.png" alt="Logo" width="120">
-</header>
+  <div class="login-card">
+    <div class="logo-area">
+      <img src="assets/logo.png" alt="Logo">
+      <div class="logo-name">Apex Account</div>
+    </div>
 
-<main>
-  <h1>Login</h1>
+    <div class="login-header">
+      <h2>Welcome Back</h2>
+      <p>Please login to your account</p>
+    </div>
 
  
  <form id="loginForm"> <!-- Form id -->
-  <label for="email">Email</label><br>
-  <input id="email" type="email" required><br><br>
 
-  <label for="password">Password</label><br>
-  <input id="password" type="password" required><br><br>
+ <div class="form-group">
+      <label for="loginUser">Username</label>
+      <input id="loginUser" type="text" placeholder="Enter your username" autocomplete="username">
+    </div>
 
-  <button type="submit">Submit</button>
-</form>
-    <a href="forgotPassword.html">Forgot Password</a><br><br>
+    <div class="form-group">
+      <label for="loginPw">Password</label>
+      <input id="loginPw" type="password" placeholder="Enter your password" autocomplete="current-password">
 
-    <a href="register.html">Create New User</a>
-  </form>
-</main>
+
+<div id="loginError" class="error-msg" style="display:none; color: red; margin-bottom: 10px;"></div>
+
+      <button type="submit" class="btn btn-primary" style="width: 100%; margin-bottom: 10px;">Sign In</button>
+    </form>
+    <a class="btn btn-secondary" href="forgotPassword.html" style="display: block; text-align: center; margin-bottom: 10px;">Forgot Password</a>
+
+    <div class="divider" style="text-align: center; margin: 15px 0;">or</div>
+
+    <a class="btn btn-secondary" href="register.html" style="display: block; text-align: center;">Create New User Account</a>
+  </div>
+
+
 
 <script type="module">
   import { auth } from './firebase-config.js';
