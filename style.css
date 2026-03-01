@@ -51,13 +51,19 @@ a {
 }
 a:hover { color: var(--gold-light); }
 
-body.auth-page,
-body:has(.login-card) {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  position: relative;
+.auth-page {
+    min-height: 100vh; /* Ensures the page is at least the height of the screen */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 0;   /* Adds breathing room at the top and bottom */
+    overflow-y: auto;  /* Explicitly allows vertical scrolling */
+}
+
+.login-card {
+    width: 100%;
+    max-width: 450px;
+    margin: auto;      /* Centers the card if the page grows */
 }
 
 body::before {
@@ -274,6 +280,7 @@ body::after {
   background: var(--gold);
   color:#080b0f;
   animation: fadeUp 0.5s 0.22s cubic-bezier(0.22,1,0.36,1) both;
+  margin-top: 15px;
 }
 
 .btn-primary:hover{

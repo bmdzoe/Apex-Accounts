@@ -24,8 +24,8 @@
  <form id="loginForm"> <!-- Form id -->
 
  <div class="form-group">
-      <label for="loginUser">Username</label>
-      <input id="loginUser" type="text" placeholder="Enter your username" autocomplete="username">
+      <label for="loginUser">Email</label>
+      <input id="loginUser" type="text" placeholder="Enter your email" autocomplete="username">
     </div>
 
     <div class="form-group">
@@ -55,8 +55,8 @@
   loginForm.addEventListener('submit', (e) => {
     e.preventDefault();
 
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
+    const email = document.getElementById('loginUser').value;
+    const password = document.getElementById('loginPw').value;
 
     signInWithEmailAndPassword(auth, email, password)
       .then((userCredential) => {
@@ -64,7 +64,9 @@
         window.location.href = "accountantDashboard.html"; 
       })
       .catch((error) => {
-        alert("Login failed: " + error.message);
+        const errorDiv = document.getElementById('loginError');
+      errorDiv.textContent = "Login failed: " + error.message;
+        errorDiv.style.display = 'block';
       });
   });
 </script>
