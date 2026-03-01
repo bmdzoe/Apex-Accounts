@@ -13,7 +13,7 @@
   <img src="assets/logo.png" alt="Logo" width="120">
 
   <div>
-    <span>Username: AccountantUser</span>
+  <span id="displayUsername">Username: </span>
     <img src="assets/userAccountant.png" alt="User Picture" width="40" height="40">
 	<a href="login.html">Logout</a>
   </div>
@@ -22,6 +22,32 @@
 <main>
   <h1>Accountant Dashboard</h1>
 </main>
+
+<script type="module">
+  import { auth, db } from './firebase-config.js';
+  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+     //getting logged in user information from database
+    
+      const docRef = doc(db, "users", user.uid);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const userData = docSnap.data();
+        // update with their username
+        document.getElementById('displayUsername').innerText = `Username: ${userData.username}`;
+      } else {
+        console.log("No user");
+      }
+    } else {
+      //if there is no one logged in
+      window.location.href = "login.html";
+    }
+  });
+</script>
 
 </body>
 </html>

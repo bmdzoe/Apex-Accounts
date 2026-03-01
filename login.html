@@ -2,64 +2,58 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Finance Application</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
-<body class="auth-page">
+<body>
 
-  <div class="login-card">
-    <div class="logo-area">
-      <img src="assets/logo.png" alt="Logo">
-      <div class="logo-name">Apex Account</div>
-    </div>
+<header>
+  <img src="assets/logo.png" alt="Logo" width="120">
+</header>
 
-    <div class="login-header">
-      <h2>Welcome Back</h2>
-      <p>Please login to your account</p>
-    </div>
+<main>
+  <h1>Login</h1>
 
-    <div class="form-group">
-      <label for="loginUser">Username</label>
-      <input id="loginUser" type="text" placeholder="Enter your username" autocomplete="username">
-    </div>
+ 
+ <form id="loginForm"> <!-- Form id -->
+  <label for="email">Email</label><br>
+  <input id="email" type="email" required><br><br>
 
-    <div class="form-group">
-      <label for="loginPw">Password</label>
-      <input id="loginPw" type="password" placeholder="Enter your password" autocomplete="current-password">
-      <span class="input-icon" onclick="togglePw()">👁</span>
-    </div>
+  <label for="password">Password</label><br>
+  <input id="password" type="password" required><br><br>
 
-    <div id="loginError" class="error-msg">Please enter your username and password.</div>
+  <button type="submit">Submit</button>
+</form>
+    <a href="forgotPassword.html">Forgot Password</a><br><br>
 
-    <button class="btn btn-primary" onclick="doLogin()">Sign In</button>
+    <a href="register.html">Create New User</a>
+  </form>
+</main>
 
-    <a class="btn btn-secondary" href="forgotPassword.html">Forgot Password</a>
+<script type="module">
+  import { auth } from './firebase-config.js';
+  import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-    <div class="divider">or</div>
+  const loginForm = document.getElementById('loginForm');
 
-    <a class="btn btn-secondary" href="register.html">Create New User Account</a>
-  </div>
+  loginForm.addEventListener('submit', (e) => {
+    e.preventDefault();
 
-  <script>
-    function togglePw() {
-      const inp = document.getElementById('loginPw');
-      const icon = document.querySelector('.input-icon');
-      if (inp.type === 'password') { inp.type = 'text'; icon.textContent = '🙈'; }
-      else { inp.type = 'password'; icon.textContent = '👁'; }
-    }
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
 
-    function doLogin() {
-      const u   = document.getElementById('loginUser').value;
-      const p   = document.getElementById('loginPw').value;
-      const err = document.getElementById('loginError');
-
-      if (!u || !p) { err.style.display = 'block'; return; }
-      err.style.display = 'none';
-
-      alert('Login successful! In the real app this would redirect to accountantDashboard.html');
-    }
-  </script>
+    signInWithEmailAndPassword(auth, email, password)
+      .then((userCredential) => {
+       
+        window.location.href = "accountantDashboard.html"; 
+      })
+      .catch((error) => {
+        alert("Login failed: " + error.message);
+      });
+  });
+</script>
 
 </body>
 </html>
