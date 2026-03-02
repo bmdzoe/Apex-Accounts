@@ -55,4 +55,41 @@
 
 </body>
 
+<script type="module">
+  import { db } from './firebase-config.js';
+  import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+  async function loadPendingUsers() {
+    const tbody = document.querySelector('tbody');
+    tbody.innerHTML = ""; 
+
+    // showing users with false attribute
+    const q = query(
+    collection(db, "users"), 
+    where("approved", "==", false), 
+    where("status", "==", "pending"));
+
+    const querySnapshot = await getDocs(q);
+
+    querySnapshot.forEach((doc) => {
+      const user = doc.data();
+      
+      // row for each unapproved user
+      const row = `
+        <tr>
+          <td>${doc.id.substring(0, 5)}...</td>
+          <td>${user.firstName} ${user.lastName}</td>
+          <td>${user.email}</td>
+          <td>${user.dob}</td>
+          <td>${user.address}</td>
+          <td><a href="approveReject.html?uid=${doc.id}">Review</a></td>
+        </tr>
+      `;
+      tbody.innerHTML += row;
+    });
+  }
+
+  loadPendingUsers();
+</script>
+
 </html>

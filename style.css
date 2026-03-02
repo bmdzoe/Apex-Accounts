@@ -52,18 +52,18 @@ a {
 a:hover { color: var(--gold-light); }
 
 .auth-page {
-    min-height: 100vh; /* Ensures the page is at least the height of the screen */
+    min-height: 100vh; 
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 40px 0;   /* Adds breathing room at the top and bottom */
-    overflow-y: auto;  /* Explicitly allows vertical scrolling */
+    padding: 40px 0;   
+    overflow-y: auto; 
 }
 
 .login-card {
     width: 100%;
     max-width: 450px;
-    margin: auto;      /* Centers the card if the page grows */
+    margin: auto;     
 }
 
 body::before {

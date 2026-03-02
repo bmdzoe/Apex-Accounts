@@ -24,26 +24,29 @@
 <main>
   <h1>Approve / Reject Request</h1>
 
-  <form action="notificationSent.html" method="post">
-
-    <label>Request ID</label><br>
-    <input type="text" value="R-001" disabled><br><br>
+  <form id="approveRejectForm">
+    <label>User ID</label><br>
+    <input type="text" id="displayUid" disabled><br><br>
 
     <label>First Name</label><br>
-    <input type="text" value="Jane" disabled><br><br>
+    <input type="text" id="displayFirst" disabled><br><br>
 
     <label>Last Name</label><br>
-    <input type="text" value="Doe" disabled><br><br>
+    <input type="text" id="displayLast" disabled><br><br>
 
     <label>Email Address</label><br>
-    <input type="email" value="jane@example.com" disabled><br><br>
+    <input type="email" id="displayEmail" disabled><br><br>
 
-    <label>Date of Birth</label><br>
-    <input type="date" value="2000-01-01" disabled><br><br>
+    <label for="decision">Decision</label><br>
+    <select id="decision" required>
+      <option value="">Select</option>
+      <option value="approve">Approve</option>
+      <option value="reject">Reject</option>
+    </select><br><br>
 
-    <label>Address</label><br>
-    <input type="text" value="123 Main St" disabled><br><br>
-
+    <button type="submit">Submit</button>
+    <a href="accessRequests.html">Cancel</a>
+</form>
     <label for="decision">Decision</label><br>
     <select id="decision" name="decision" required>
       <option value="">Select</option>
@@ -62,6 +65,58 @@
 
   </form>
 </main>
+
+<script type="module">
+  import { db } from './firebase-config.js';
+  import { doc, getDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const userToReview = urlParams.get('uid');
+
+  // loading user data from database
+  if (userToReview) {
+    const userRef = doc(db, "users", userToReview);
+    const userSnap = await getDoc(userRef);
+
+    if (userSnap.exists()) {
+      const data = userSnap.data();
+      document.getElementById('displayUid').value = userToReview;
+      document.getElementById('displayFirst').value = data.firstName;
+      document.getElementById('displayLast').value = data.lastName;
+      document.getElementById('displayEmail').value = data.email;
+    }
+  }
+
+  // approving or denial
+  document.getElementById('approveRejectForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const decision = document.getElementById('decision').value;
+    const userRef = doc(db, "users", userToReview);
+
+    try {
+      if (decision === 'approve') {
+   await updateDoc(userRef, { 
+      approved: true, 
+      status: 'approved' 
+    });
+    alert("User approved! They can now log in.");
+      } else {
+      
+        await updateDoc(userRef, { 
+          approved: false, 
+          status: 'rejected' 
+        });
+        alert("User rejected. Their account is now locked with a 'Rejected' status.");
+      } 
+
+     
+      window.location.href = "accessRequests.html";
+
+    } catch (error) {
+      alert("Error: " + error.message);
+    }
+  });
+</script>
 
 </body>
 </html>

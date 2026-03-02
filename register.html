@@ -21,7 +21,7 @@
         <form id="registerForm">
             <div class="form-group">
                 <label>Username</label>
-                <input type="text" id="regUsername" placeholder="Choose a username" autocomplete="username" required>
+                <input type="text" id="regUsername" placeholder="Enter a username" autocomplete="username" required>
             </div>
             
             <div class="form-row" style="display: flex; gap: 1rem;">
@@ -110,12 +110,18 @@
         username: document.getElementById('regUsername').value,
         firstName: document.getElementById('first').value,
         lastName: document.getElementById('last').value,
+        email: document.getElementById('email').value,
         dob: document.getElementById('dob').value,
         phone: document.getElementById('phone').value,
         address: document.getElementById('address').value,
         securityQuestion: document.getElementById('secQ').value,
         securityAnswer: document.getElementById('secA').value,
+        approved: false, //admin approval
+        status: "pending",
+        loginAttempts: 0, 
         role: "accountant" // hardcoding role for now
+    
+
       });
         
         window.location.href = "pendingApproval.html";
