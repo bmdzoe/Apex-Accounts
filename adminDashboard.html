@@ -23,7 +23,22 @@
 
 <main>
   <h1>Administrator Dashboard</h1>
+<div style="margin: 30px 0; display: flex; gap: 50px;">
+<div>
+  <h3>Total Users</h3>
+  <p id="totalUsers">0</p>
+  </div>
 
+  <div>
+    <h3>Pending Users</h3>
+    <p id="pendingUsers">0</p>
+  </div>
+
+  <div>
+    <h3>Approved Users</h3>
+    <p id="approvedUsers">0</p>
+  </div>
+</div>
   <nav>
     <ul>
       <li><a href="createUser.html">Create User</a></li>
@@ -37,7 +52,38 @@
     </ul>
   </nav>
 </main>
+<script type="module">
+import { auth, db } from "./firebase-config.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
+const totalUsersEl = document.getElementById("totalUsers");
+const pendingUsersEl = document.getElementById("pendingUsers");
+const approvedUsersEl = document.getElementById("approvedUsers");
+
+async function loadDashboardData() {
+  const usersRef = collection(db, "users");
+
+  const allUsersSnapshot = await getDocs(usersRef);
+  totalUsersEl.textContent = allUsersSnapshot.size;
+
+  const pendingQuery = query(usersRef, where("approved", "==", false));
+  const pendingSnapshot = await getDocs(pendingQuery);
+  pendingUsersEl.textContent = pendingSnapshot.size;
+  const approvedQuery = query(usersRef, where("approved", "==", true));
+  const approvedSnapshot = await getDocs(approvedQuery);
+  approvedUsersEl.textContent = approvedSnapshot.size;
+}
+
+onAuthStateChanged(auth, (user) => {
+  if (!user) {
+    window.location.href = "login.html";
+  } else {
+    loadDashboardData();
+  }
+});
+
+</script>
 </body>
 
 </html>
