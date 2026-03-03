@@ -1,4 +1,3 @@
-<!-- accessRequests.html -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -8,9 +7,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
-
 <header>
   <img src="assets/logo.png" alt="Logo" width="120">
   <div>
@@ -21,11 +18,8 @@
 	<a href="login.html">Logout</a>
   </div>
 </header>
-
-
 <main>
   <h1>Pending Approvals</h1>
-
   <table border="1" cellpadding="8" cellspacing="0">
     <thead>
       <tr>
@@ -52,29 +46,20 @@
   <br>
   <a href="adminDashboard.html">Back</a>
 </main>
-
 </body>
-
 <script type="module">
   import { db } from './firebase-config.js';
   import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
   async function loadPendingUsers() {
     const tbody = document.querySelector('tbody');
     tbody.innerHTML = ""; 
-
-    // showing users with false attribute
     const q = query(
     collection(db, "users"), 
     where("approved", "==", false), 
     where("status", "==", "pending"));
-
     const querySnapshot = await getDocs(q);
-
     querySnapshot.forEach((doc) => {
       const user = doc.data();
-      
-      // row for each unapproved user
       const row = `
         <tr>
           <td>${doc.id.substring(0, 5)}...</td>
@@ -88,8 +73,6 @@
       tbody.innerHTML += row;
     });
   }
-
   loadPendingUsers();
 </script>
-
 </html>
