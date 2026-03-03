@@ -1,61 +1,77 @@
-<!-- viewUsersReport.html -->
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>User Repors</title>
+  <title>User Reports</title>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
 <header>
   <img src="assets/logo.png" alt="Logo">
   <div>
-    <span>Username: AdminUser</span>
+    <span id="headerUsername">Username: AdminUser</span>
     <a href="profile.html">
       <img src="assets/userAdmin.png" alt="User Profile" width="40" height="40">
     </a>
-	<a href="login.html">Logout</a>
+    <a href="login.html" onclick="localStorage.clear()">Logout</a>
   </div>
 </header>
-
 <main>
   <h1>All Users Report</h1>
-
-  <table border="1" cellpadding="8" cellspacing="0">
+  <p id="loadingMsg">Loading users...</p>
+  <p id="emptyMsg" style="display:none;">No users found.</p>
+  <table border="1" cellpadding="8" cellspacing="0" id="usersTable" style="display:none;">
     <thead>
       <tr>
         <th>User ID</th>
+        <th>Username</th>
         <th>Name</th>
         <th>Email</th>
         <th>Role</th>
         <th>Status</th>
       </tr>
     </thead>
-    <tbody>
-      <tr>
-        <td>U1001</td>
-        <td>Jane Doe</td>
-        <td>jane@example.com</td>
-        <td>Accountant</td>
-        <td>Active</td>
-      </tr>
-      <tr>
-        <td>U1002</td>
-        <td>John Smith</td>
-        <td>john@example.com</td>
-        <td>Manager</td>
-        <td>Inactive</td>
-      </tr>
-    </tbody>
+    <tbody id="usersBody"></tbody>
   </table>
-
   <br>
   <a href="adminDashboard.html">Back</a>
 </main>
-
 </body>
-
+<script type="module">
+  import { db } from './firebase-config.js';
+  import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+  const username = localStorage.getItem('username');
+  if (username) document.getElementById('headerUsername').textContent = 'Username: ' + username;
+  async function loadUsers() {
+    const tbody = document.getElementById('usersBody');
+    try {
+      const snapshot = await getDocs(collection(db, "users"));
+      document.getElementById('loadingMsg').style.display = 'none';
+      if (snapshot.empty) {
+        document.getElementById('emptyMsg').style.display = 'block';
+        return;
+      }
+      snapshot.forEach((docSnap) => {
+        const u = docSnap.data();
+        const row = `
+          <tr>
+            <td>${docSnap.id.substring(0, 8)}...</td>
+            <td>${u.username || 'N/A'}</td>
+            <td>${u.firstName} ${u.lastName}</td>
+            <td>${u.email}</td>
+            <td>${u.role}</td>
+            <td>${u.status}</td>
+          </tr>
+        `;
+        tbody.innerHTML += row;
+      });
+      document.getElementById('usersTable').style.display = 'table';
+    } catch (err) {
+      document.getElementById('loadingMsg').textContent = 'Failed to load users.';
+    }
+  }
+  loadUsers();
+</script>
 </html>
