@@ -38,6 +38,12 @@
     <h3>Approved Users</h3>
     <p id="approvedUsers">0</p>
   </div>
+
+<div>
+    <h3>Rejected Users</h3>
+    <p id="rejectedUsers">0</p>
+  </div>
+
 </div>
   <nav>
     <ul>
@@ -60,21 +66,30 @@ import { collection, getDocs, query, where } from "https://www.gstatic.com/fireb
 const totalUsersEl = document.getElementById("totalUsers");
 const pendingUsersEl = document.getElementById("pendingUsers");
 const approvedUsersEl = document.getElementById("approvedUsers");
+const rejectedUsersEl = document.getElementById("rejectedUsers");
 
 async function loadDashboardData() {
   const usersRef = collection(db, "users");
 
+
   const allUsersSnapshot = await getDocs(usersRef);
   totalUsersEl.textContent = allUsersSnapshot.size;
 
-  const pendingQuery = query(usersRef, where("approved", "==", false));
+
+  const pendingQuery = query(usersRef, where("status", "==", "pending"));
   const pendingSnapshot = await getDocs(pendingQuery);
   pendingUsersEl.textContent = pendingSnapshot.size;
-  const approvedQuery = query(usersRef, where("approved", "==", true));
+
+
+  const approvedQuery = query(usersRef, where("status", "==", "approved"));
   const approvedSnapshot = await getDocs(approvedQuery);
   approvedUsersEl.textContent = approvedSnapshot.size;
-}
 
+const rejectedQuery = query(usersRef, where("status", "==", "rejected"));
+  const rejectedSnapshot = await getDocs(rejectedQuery);
+  rejectedUsersEl.textContent = rejectedSnapshot.size;
+
+}
 onAuthStateChanged(auth, (user) => {
   if (!user) {
     window.location.href = "login.html";
