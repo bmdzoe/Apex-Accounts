@@ -98,6 +98,7 @@
     })
     .catch(async(error) => {
       const errorDiv = document.getElementById('loginError');
+      errorDiv.textContent = "Login failed: " + error.message;
       errorDiv.style.display = 'block';
 
       // If password entry was invalid, increment account log-in attempts
@@ -126,8 +127,6 @@
             errorDiv.textContent = "Incorrect password or email entered, please try again. Attempts remaining: " + (3 - logins);
           }
         }
-      } else{
-        errorDiv.textContent = "Login failed: " + error.message;
       }
     });
   });
