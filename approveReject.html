@@ -37,8 +37,6 @@
     </select><br><br>
     <label for="message">Email Message</label><br>
     <textarea id="message" name="message" rows="6" required></textarea><br><br>
-    <label for="loginlink">Login Link (if approved)</label><br>
-    <input type="url" id="loginlink" name="loginlink" value="login.html"><br><br>
     <button type="submit">Submit</button>
     <a href="notificationSent.html">Cancel</a>
   </form>
@@ -63,27 +61,67 @@
     e.preventDefault();
     const decision = document.getElementById('decision').value;
     const userRef = doc(db, "users", userToReview);
-    try {
+  
+try {
+      const userEmail = document.getElementById('displayEmail').value;
+      const adminMessage = document.getElementById('message').value;
+
       if (decision === 'approve') {
-   await updateDoc(userRef, { 
-      approved: true, 
-      status: 'approved' 
-    });
-    alert("User approved! They can now log in.");
+        await updateDoc(userRef, { 
+          approved: true, 
+          status: 'approved' 
+        });
+
+        //triggers acception email
+        sendEmail({
+            recipient: userEmail,
+            subject: "Your Account has been Approved!",
+            message: adminMessage 
+        });
+
+        alert("User approved and notification sent!");
       } else {
-      
         await updateDoc(userRef, { 
           approved: false, 
           status: 'rejected' 
         });
-        alert("User rejected. Their account is now locked with a 'Rejected' status.");
+
+        //rejection email
+        sendEmail({
+            recipient: userEmail,
+            subject: "Account Request Status",
+            message: "Your request for access has been rejected. Message: " + adminMessage
+        });
+
+        alert("User rejected and notification sent.");
       } 
       window.location.href = "accessRequests.html";
     } catch (error) {
       alert("Error: " + error.message);
     }
-  });
+  }); 
 </script>
+
+
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+<script type="text/javascript">
+   (function(){
+      emailjs.init("cC6e6ZNLke2V3BRfU"); 
+   })();
+
+ const sendEmail = (emailData) => {
+    emailjs.send("service_nnjzk4j", "template_r50wjct", { //service id then template id
+        recipientEmail: emailData.recipient,
+        subject: emailData.subject,
+        message: emailData.message
+    }).then(() => {
+        alert("Email sent successfully!");
+    }, (error) => {
+        alert("Failed to send email: " + JSON.stringify(error));
+    });
+};
+</script>
+
 </body>
 
 </html>
