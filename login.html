@@ -48,8 +48,8 @@
 
 <script type="module">
   import { auth, db } from './firebase-config.js';
-  import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-  import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+  import { signInWithEmailAndPassword, signOut} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  import { collection, query, where, doc, getDoc, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
   const loginForm = document.getElementById('loginForm');
 
@@ -59,7 +59,8 @@
     const email = document.getElementById('loginUser').value;
     const password = document.getElementById('loginPw').value;
 
-    signInWithEmailAndPassword(auth, email, password).then(async(userCredential) => {
+    signInWithEmailAndPassword(auth, email, password)
+    .then(async(userCredential) => {
     
       const user = userCredential.user;
       const userSnap = await getDoc(doc(db, "users", user.uid));
@@ -68,13 +69,13 @@
         const userData = userSnap.data();
   
         if(userData.status === "suspended") {
-          await signout(auth).then(() => {
+          await signOut(auth).then(() => {
             alert("Your account has been suspended from too many failed attempts. Please contact administration for details.");
           }).catch((error) => {
             const errorDiv = document.getElementById('loginError');
             errorDiv.textContent = "Login failed: " + error.message;
-            errorDiv.style.display = 'block';            
-          });          
+            errorDiv.style.display = 'block';      
+          });
           return;
         }
 
@@ -98,35 +99,45 @@
     })
     .catch(async(error) => {
       const errorDiv = document.getElementById('loginError');
-      errorDiv.textContent = "Login failed: " + error.message;
       errorDiv.style.display = 'block';
 
       // If password entry was invalid, increment account log-in attempts
       if(error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-        const q = query(collection(db, "users"), where ("email", "==", email)); // Get user data by email
-        const querySnap = await getDocs(q);
-
-        if(!querySnap.empty) {
-          const userDoc = querySnap.docs[0];
-          const userData = userDoc.data();
-          const userDocRef = doc(db, "users", userDoc.id);
-
-          let logins = userData.loginAttempts + 1;
-          let updates = {loginAttempts: logins};
-          let suspended = false;
-
-          if(logins >= 3) { // Suspend account once 3 unsuccessful log-in attempts are exceeded
-            updates.status = "suspended";
-            suspended = true;
-          }
-
-          await updateDoc(userDocRef, updates);
-          if(suspended) { // Redirect the user to the suspension page
-            window.location.href = "suspend.html";
+        const email = document.getElementById('loginUser').value;
+        
+        try {
+          const q = query(collection(db, "users"), where("email", "==", email)); // Get user data by email
+          const querySnap = await getDocs(q);
+  
+          if(!querySnap.empty) {
+            const userDoc = querySnap.docs[0];
+            const userData = userDoc.data();
+            const userDocRef = doc(db, "users", userDoc.id);
+  
+            let logins = (userData.loginAttempts || 0) + 1;
+  
+            let updates = {loginAttempts: logins};
+            let suspended = false;
+  
+            if(logins >= 3) { // Suspend account once 3 unsuccessful log-in attempts are exceeded
+              updates.status = "suspended";
+              suspended = true;
+            }
+  
+            await updateDoc(userDocRef, updates);
+            if(suspended) { // Redirect the user to the suspension page
+              window.location.href = "suspend.html";
+            } else {
+              errorDiv.textContent = "Incorrect password or email entered, please try again. Attempts remaining: " + (3 - logins);
+            }
           } else {
-            errorDiv.textContent = "Incorrect password or email entered, please try again. Attempts remaining: " + (3 - logins);
+            errorDiv.textContent = "Login failed: Invalid email/password"
           }
+        } catch (e) {
+          errorDiv.textContent = "Login failed with error: " + e;
         }
+      } else {
+        errorDiv.textContent = "Critical error: " + error.message;
       }
     });
   });
