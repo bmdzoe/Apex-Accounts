@@ -65,7 +65,11 @@
     const user = userCredential.user;
     const userSnap = await getDoc(doc(db, "users", user.uid));
 
-    if (userSnap.exists()) {
+    if (!userSnap.exists()) {
+      window.location.href = "login.html";
+      return;
+    }
+
       const userData = userSnap.data();
 
     if (userData.status === 'rejected') {
@@ -76,18 +80,26 @@
       // no admin approval gets pending page
       if (userData.approved === false) {
         window.location.href = "pendingApproval.html";
-      } else {
-        // approval goes to dashboard
-        window.location.href = "accountantDashboard.html";
+        return;
       }
-    }
+
+        // role based redirected
+        const role = (userData.role || "").toLowerCase();
+
+        if (role ==="admin") {
+          window.location.href = "adminDashboard.html";
+        } else if (role === "manager") {
+          window.location.href = "managerDashboard.html";
+        } else {
+          window.location.href = "accountantDashboard.html";
+        }
       })
       .catch((error) => {
         const errorDiv = document.getElementById('loginError');
       errorDiv.textContent = "Login failed: " + error.message;
         errorDiv.style.display = 'block';
       });
-  });
+
 </script>
 
 </body>
