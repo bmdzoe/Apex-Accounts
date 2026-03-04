@@ -1,13 +1,13 @@
-<!-- suspendUser.html -->
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Suspend User</title>
+  <title>User Suspended</title>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
 <header>
@@ -17,28 +17,19 @@
     <a href="profile.html">
       <img src="assets/userAdmin.png" alt="User Profile" width="40" height="40">
     </a>
-	<a href="login.html">Logout</a>
+    <a href="login.html">Logout</a>
   </div>
 </header>
 
 <main>
-  <h1>Suspend User</h1>
 
-  <form action="#" method="post">
-    <label for="userid">User ID</label><br>
-    <input type="text" id="userid" name="userid" required><br><br>
+  <h1>User Suspended</h1>
 
-    <label for="startdate">Start Date</label><br>
-    <input type="date" id="startdate" name="startdate" required><br><br>
+  <p>The user has been successfully suspended for the selected time period.</p>
 
-    <label for="enddate">Expiry Date</label><br>
-    <input type="date" id="enddate" name="enddate" required><br><br>
+  <a href="adminDashboard.html">Return to Dashboard</a>
 
-    <button type="submit">Suspend</button>
-    <a href="suspendConfirmation.html">Cancel</a>
-  </form>
 </main>
 
 </body>
-
 </html>
