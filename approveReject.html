@@ -20,7 +20,7 @@
 </header>
 <main>
   <h1>Approve / Reject Request</h1>
-  <form id="approveRejectForm">
+  <form id="approveRejectForm" action="notificationSent.html" method="get">
     <label>User ID</label><br>
     <input type="text" id="displayUid" disabled><br><br>
     <label>First Name</label><br>
@@ -40,7 +40,7 @@
     <label for="loginlink">Login Link (if approved)</label><br>
     <input type="url" id="loginlink" name="loginlink" value="login.html"><br><br>
     <button type="submit">Submit</button>
-    <a href="notificationSent.html">Cancel</a>
+    <a href="accessRequests.html">Cancel</a>
   </form>
 </main>
 <script type="module">
@@ -87,3 +87,4 @@
 </body>
 
 </html>
+
