@@ -59,34 +59,77 @@
     const email = document.getElementById('loginUser').value;
     const password = document.getElementById('loginPw').value;
 
-    signInWithEmailAndPassword(auth, email, password)
-      .then(async(userCredential) => {
+    signInWithEmailAndPassword(auth, email, password).then(async(userCredential) => {
+    
+      const user = userCredential.user;
+      const userSnap = await getDoc(doc(db, "users", user.uid));
 
-    const user = userCredential.user;
-    const userSnap = await getDoc(doc(db, "users", user.uid));
+      if (userSnap.exists()) {
+        const userData = userSnap.data();
+  
+        if(userData.status === "suspended") {
+          await signout(auth).then(() => {
+            alert("Your account has been suspended from too many failed attempts. Please contact administration for details.");
+          }).catch((error) => {
+            const errorDiv = document.getElementById('loginError');
+            errorDiv.textContent = "Login failed: " + error.message;
+            errorDiv.style.display = 'block';            
+          });          
+          return;
+        }
 
-    if (userSnap.exists()) {
-      const userData = userSnap.data();
+        if (userData.status === 'rejected') {
+          alert("Your account request has been rejected. Please contact administration for details.");
+          return; //rejected gets rejection alert
+        }
 
-    if (userData.status === 'rejected') {
-    alert("Your account request has been rejected. Please contact administration for details.");
-    return; //rejected gets rejection alert
-  }
-
-      // no admin approval gets pending page
-      if (userData.approved === false) {
-        window.location.href = "pendingApproval.html";
-      } else {
-        // approval goes to dashboard
-        window.location.href = "accountantDashboard.html";
+        if(userData.loginAttempts > 0){
+          await updateDoc(doc(db, "users", user.uid), {loginAttempts: 0});
+        }
+  
+        // no admin approval gets pending page
+        if (userData.approved === false) {
+          window.location.href = "pendingApproval.html";
+        } else {
+          // approval goes to dashboard
+          window.location.href = "accountantDashboard.html";
+        }
       }
-    }
-      })
-      .catch((error) => {
-        const errorDiv = document.getElementById('loginError');
-      errorDiv.textContent = "Login failed: " + error.message;
-        errorDiv.style.display = 'block';
-      });
+    })
+    .catch(async(error) => {
+      const errorDiv = document.getElementById('loginError');
+      errorDiv.style.display = 'block';
+
+      // If password entry was invalid, increment account log-in attempts
+      if(error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+        const q = query(collection(db, "users"), where ("email", "==", email)); // Get user data by email
+        const querySnap = await getDocs(q);
+
+        if(!querySnap.empty) {
+          const userDoc = querySnap.docs[0];
+          const userData = userDoc.data();
+          const userDocRef = doc(db, "users", userDoc.id);
+
+          let logins = userData.loginAttempts + 1;
+          let updates = {loginAttempts: logins};
+          let suspended = false;
+
+          if(logins >= 3) { // Suspend account once 3 unsuccessful log-in attempts are exceeded
+            updates.status = "suspended";
+            suspended = true;
+          }
+
+          await updateDoc(userDocRef, updates);
+          if(suspended) { // Redirect the user to the suspension page
+            window.location.href = "suspend.html";
+          } else {
+            errorDiv.textContent = "Incorrect password or email entered, please try again. Attempts remaining: " + (3 - logins);
+          }
+        }
+      } else{
+        errorDiv.textContent = "Login failed: " + error.message;
+      }
+    });
   });
 </script>
 
