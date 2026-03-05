@@ -39,6 +39,47 @@
   </form>
 </main>
 
+<script type="module">
+  import { db } from './firebase-config.js';
+  import { doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+  const statusForm = document.querySelector('form');
+
+  statusForm.addEventListener('submit', async (e) => {
+    e.preventDefault(); 
+    
+    const uid = document.getElementById('userid').value.trim();
+    const newStatus = document.getElementById('status').value;
+    const userRef = doc(db, "users", uid);
+
+    try {
+  const userSnap = await getDoc(userRef);
+  
+  if (!userSnap.exists()) {
+    alert("Error: User ID not found in database.");
+    return;
+  }
+
+
+  const selection = document.getElementById('status').value; // active or inactive
+  const finalStatus = (selection === 'active') ? 'approved' : 'suspended';
+  const finalApproved = (selection === 'active');
+
+ 
+  await updateDoc(userRef, {
+    status: finalStatus,
+    approved: finalApproved
+  });
+
+  alert(`User status successfully updated to: ${finalStatus.toUpperCase()}`);
+  window.location.href = "activateDeactivateConfirmation.html"; 
+  
+} catch (error) {
+  alert("Failed to update user: " + error.message);
+}
+  });
+</script>
+
 </body>
 
 </html>
