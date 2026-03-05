@@ -48,8 +48,8 @@
 
 <script type="module">
   import { auth, db } from './firebase-config.js';
-  import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-  import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+  import { signInWithEmailAndPassword, signOut} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  import { collection, query, where, doc, getDoc, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
   const loginForm = document.getElementById('loginForm');
 
@@ -60,16 +60,12 @@
     const password = document.getElementById('loginPw').value;
 
     signInWithEmailAndPassword(auth, email, password)
-      .then(async(userCredential) => {
+    .then(async(userCredential) => {
+    
+      const user = userCredential.user;
+      const userSnap = await getDoc(doc(db, "users", user.uid));
 
-    const user = userCredential.user;
-    const userSnap = await getDoc(doc(db, "users", user.uid));
-
-    if (!userSnap.exists()) {
-      window.location.href = "login.html";
-      return;
-    }
-
+    if (userSnap.exists()) {
       const userData = userSnap.data();
 
     if (userData.status === 'rejected') {
@@ -80,26 +76,18 @@
       // no admin approval gets pending page
       if (userData.approved === false) {
         window.location.href = "pendingApproval.html";
-        return;
+      } else {
+        // approval goes to dashboard
+        window.location.href = "accountantDashboard.html";
       }
-
-        // role based redirected
-        const role = (userData.role || "").toLowerCase();
-
-        if (role ==="admin") {
-          window.location.href = "adminDashboard.html";
-        } else if (role === "manager") {
-          window.location.href = "managerDashboard.html";
-        } else {
-          window.location.href = "accountantDashboard.html";
-        }
+    }
       })
       .catch((error) => {
         const errorDiv = document.getElementById('loginError');
       errorDiv.textContent = "Login failed: " + error.message;
         errorDiv.style.display = 'block';
       });
-
+  });
 </script>
 
 </body>

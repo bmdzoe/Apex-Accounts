@@ -500,8 +500,18 @@ main a[href="adminDashboard.html"]:visited{
   text-transform: uppercase;
 }
 
+
 main a[href="adminDashboard.html"]:hover{
   background: var(--surface-2);
   border-color: var(--gold);
   color: var(--gold-light);
+}
+html, body {
+  height: auto;
+  overflow-y: auto;
+}
+
+.auth-page {
+  min-height: 100vh;
+  overflow-y: auto;
 }

@@ -1,4 +1,3 @@
-<!-- sendEmail.html -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -29,8 +28,8 @@
     <label for="email">To:</label><br>
     <input type="email" id="email" name="email" required><br><br>
 
-    <label for="email">From:</label><br>
-    <input type="email" id="email" name="email" required><br><br>
+    <label for="fromEmail">From:</label><br>
+    <input type="email" id="fromEmail" value="apexhelper12@gmail.com (Apex-Accounts Admin)" disabled><br><br>
 
     <label for="subject">Subject</label><br>
     <input type="text" id="subject" name="subject" required><br><br>
@@ -42,6 +41,42 @@
     <a href="adminDashboard.html">Cancel</a>
   </form>
 </main>
+
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+<script type="text/javascript">
+   (function(){
+      emailjs.init("cC6e6ZNLke2V3BRfU"); 
+   })();
+
+   const sendEmail = (emailData) => {
+    emailjs.send("service_nnjzk4j", "template_r50wjct", { //service id then template id
+        recipientEmail: emailData.recipient,
+        subject: emailData.subject,
+        message: emailData.message
+    }).then(() => {
+        alert("Email sent successfully!");
+    }, (error) => {
+        alert("Failed to send email: " + JSON.stringify(error));
+    });
+};
+</script>
+
+<script type="text/javascript">
+  document.querySelector('form').addEventListener('submit', function(e) {
+    e.preventDefault();
+  
+    //getting form values to send
+    const recipientEmail = document.getElementById('email').value;
+    const emailSubject = document.getElementById('subject').value;
+    const emailMessage = document.getElementById('message').value;
+
+    sendEmail({
+        recipient: recipientEmail,
+        subject: emailSubject,
+        message: emailMessage
+    });
+  });
+</script>
 
 </body>
 

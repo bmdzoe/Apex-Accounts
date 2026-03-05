@@ -32,14 +32,6 @@
       </tr>
     </thead>
     <tbody>
-      <tr>
-        <td>R-001</td>
-        <td>Jane Doe</td>
-        <td>jane@example.com</td>
-        <td>2000-01-01</td>
-        <td>123 Main St</td>
-        <td><a href="approveReject.html">Review</a></td>
-      </tr>
     </tbody>
   </table>
 
@@ -53,10 +45,7 @@
   async function loadPendingUsers() {
     const tbody = document.querySelector('tbody');
     tbody.innerHTML = ""; 
-    const q = query(
-    collection(db, "users"), 
-    where("approved", "==", false), 
-    where("status", "==", "pending"));
+    const q = query(collection(db, "users"), where("approved", "==", false), where("status", "==", "pending"));
     const querySnapshot = await getDocs(q);
     querySnapshot.forEach((doc) => {
       const user = doc.data();
