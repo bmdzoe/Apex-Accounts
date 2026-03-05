@@ -17,9 +17,9 @@
   <h1>Security Questions</h1>
   <p>Please answer your security questions to continue.</p>
 
-  <form action="resetPassword.html" method="get">
+  <form id="securityForm">
     <label>Security Question</label><br>
-    <input type="text" value="What is the name of your first pet?" disabled><br><br>
+    <input type="text" id="q1" value="What is the name of your first pet?" disabled><br><br>
 
     <label for="a1">Answer</label><br>
     <input type="text" id="a1" name="a1" required><br><br>
@@ -28,6 +28,43 @@
     <a href="resetPassword.html">Cancel</a>
   </form>
 </main>
+
+<script type="module">
+  import { auth, db } from './firebase-config.js';
+  import {doc, getDoc} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+  const security = document.getElementById("securityForm");
+  const id = sessionStorage.getItem("resetId");
+  const email = sessionStorage.getItem("resetEmail");
+
+  if(!email || !id){ // if user tries to manually enter this page, redirect to proper page
+    window.location.href = "forgotPassword.html";
+  } else {
+    security.addEventListener('submit', async(e) => {
+      e.preventDefault();
+    
+      const answer = document.getElementById("a1").value;
+      try {
+        const userSnap = await getDoc(doc(db, "users", id));
+
+        if(userSnap.exists()) {
+          const userData = userSnap.data();
+          document.getElementById("q1").innerHTML = userData.securityQuestion; // change security question to user question
+
+          if (answer === userData.securityAnswer) {
+            window.location.href = "resetPassword.html";
+          } else {
+            alert("This answer is not correct. Please try again.")
+          }
+        } else {
+          alert("Could not properly retrieve user data.")
+        }
+      } catch (error) {
+        alert("An error occurred: " + error);
+      }
+    });
+  }
+</script>
 
 </body>
 

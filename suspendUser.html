@@ -1,4 +1,3 @@
-<!-- suspendUser.html -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -13,33 +12,120 @@
 <header>
   <img src="assets/logo.png" alt="Logo">
   <div>
-    <span>Username: AdminUser</span>
+    <span id="headerUsername">Username: AdminUser</span>
     <a href="profile.html">
       <img src="assets/userAdmin.png" alt="User Profile" width="40" height="40">
     </a>
-	<a href="login.html">Logout</a>
+    <a href="login.html">Logout</a>
   </div>
 </header>
 
 <main>
   <h1>Suspend User</h1>
 
-  <form action="suspendConfirmation.html" method="get">
-    <label for="userid">User ID</label><br>
-    <input type="text" id="userid" name="userid" required><br><br>
-
-    <label for="startdate">Start Date</label><br>
-    <input type="date" id="startdate" name="startdate" required><br><br>
-
-    <label for="enddate">Expiry Date</label><br>
-    <input type="date" id="enddate" name="enddate" required><br><br>
-
-    <button type="submit">Suspend</button>
-    <a href="adminDashboard.html">Cancel</a>
+  <!-- Step 1: look up user by email -->
+  <form id="lookupForm">
+    <label for="lookupEmail">User Email</label><br>
+    <input type="email" id="lookupEmail" placeholder="Enter user's email" required><br><br>
+    <button type="submit">Look Up User</button>
   </form>
+
+  <p id="lookupError" style="color:red; display:none;"></p>
+
+  <!-- Step 2: shown after lookup -->
+  <div id="suspendArea" style="display:none; margin-top:20px;">
+    <h2>User Found</h2>
+    <p><strong>Name:</strong> <span id="foundName"></span></p>
+    <p><strong>Email:</strong> <span id="foundEmail"></span></p>
+    <p><strong>Role:</strong> <span id="foundRole"></span></p>
+    <p><strong>Current Status:</strong> <span id="foundStatus"></span></p>
+
+    <form id="suspendForm">
+      <label for="startdate">Suspension Start Date</label><br>
+      <input type="date" id="startdate" required><br><br>
+
+      <label for="enddate">Suspension End Date</label><br>
+      <input type="date" id="enddate" required><br><br>
+
+      <label for="reason">Reason</label><br>
+      <textarea id="reason" rows="3" placeholder="e.g. Extended leave, policy violation..." required></textarea><br><br>
+
+      <p id="suspendError" style="color:red; display:none;"></p>
+
+      <button type="submit">Suspend User</button>
+      <a href="adminDashboard.html">Cancel</a>
+    </form>
+  </div>
 </main>
 
+<script type="module">
+  import { db } from './firebase-config.js';
+  import { collection, query, where, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+  const username = localStorage.getItem('username');
+  if (username) document.getElementById('headerUsername').textContent = 'Username: ' + username;
+
+  let foundUserId = null;
+
+  document.getElementById('lookupForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email   = document.getElementById('lookupEmail').value.trim();
+    const errorEl = document.getElementById('lookupError');
+    errorEl.style.display = 'none';
+
+    try {
+      const q        = query(collection(db, "users"), where("email", "==", email));
+      const snapshot = await getDocs(q);
+
+      if (snapshot.empty) {
+        errorEl.textContent   = 'No user found with that email.';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      const userDoc  = snapshot.docs[0];
+      const userData = userDoc.data();
+      foundUserId    = userDoc.id;
+
+      document.getElementById('foundName').textContent   = `${userData.firstName} ${userData.lastName}`;
+      document.getElementById('foundEmail').textContent  = userData.email;
+      document.getElementById('foundRole').textContent   = userData.role;
+      document.getElementById('foundStatus').textContent = userData.status;
+      document.getElementById('suspendArea').style.display = 'block';
+
+    } catch (err) {
+      errorEl.textContent   = 'Lookup failed: ' + err.message;
+      errorEl.style.display = 'block';
+    }
+  });
+
+  document.getElementById('suspendForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const errorEl   = document.getElementById('suspendError');
+    const startdate = document.getElementById('startdate').value;
+    const enddate   = document.getElementById('enddate').value;
+    const reason    = document.getElementById('reason').value.trim();
+    errorEl.style.display = 'none';
+
+    if (new Date(enddate) <= new Date(startdate)) {
+      errorEl.textContent   = 'End date must be after start date.';
+      errorEl.style.display = 'block';
+      return;
+    }
+
+    try {
+      await updateDoc(doc(db, "users", foundUserId), {
+        status:           'suspended',
+        suspendedFrom:    startdate,
+        suspendedUntil:   enddate,
+        suspensionReason: reason
+      });
+      window.location.href = 'suspendConfirmation.html';
+    } catch (err) {
+      errorEl.textContent   = 'Failed to suspend user: ' + err.message;
+      errorEl.style.display = 'block';
+    }
+  });
+</script>
 </body>
-
 </html>
-

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
- <title>Apex Accounts - Login</title>
+  <title>Apex Accounts - Login</title>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
@@ -20,23 +20,22 @@
       <p>Please login to your account</p>
     </div>
 
- 
- <form id="loginForm"> <!-- Form id -->
+    <form id="loginForm">
+      <div class="form-group">
+        <label for="loginUser">Email</label>
+        <input id="loginUser" type="text" placeholder="Enter your email" autocomplete="username">
+      </div>
 
- <div class="form-group">
-      <label for="loginUser">Email</label>
-      <input id="loginUser" type="text" placeholder="Enter your email" autocomplete="username">
-    </div>
+      <div class="form-group">
+        <label for="loginPw">Password</label>
+        <input id="loginPw" type="password" placeholder="Enter your password" autocomplete="current-password">
+      </div>
 
-    <div class="form-group">
-      <label for="loginPw">Password</label>
-      <input id="loginPw" type="password" placeholder="Enter your password" autocomplete="current-password">
-
-
-<div id="loginError" class="error-msg" style="display:none; color: red; margin-bottom: 10px;"></div>
+      <div id="loginError" class="error-msg" style="display:none; color: red; margin-bottom: 10px;"></div>
 
       <button type="submit" class="btn btn-primary" style="width: 100%; margin-bottom: 10px;">Sign In</button>
     </form>
+
     <a class="btn btn-secondary" href="forgotPassword.html" style="display: block; text-align: center; margin-bottom: 10px;">Forgot Password</a>
 
     <div class="divider" style="text-align: center; margin: 15px 0;">or</div>
@@ -44,51 +43,131 @@
     <a class="btn btn-secondary" href="register.html" style="display: block; text-align: center;">Create New User Account</a>
   </div>
 
-
-
 <script type="module">
   import { auth, db } from './firebase-config.js';
-  import { signInWithEmailAndPassword, signOut} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  import { signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
   import { collection, query, where, doc, getDoc, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
   const loginForm = document.getElementById('loginForm');
+  const errorDiv  = document.getElementById('loginError');
 
-  loginForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-
-    const email = document.getElementById('loginUser').value;
-    const password = document.getElementById('loginPw').value;
-
-    signInWithEmailAndPassword(auth, email, password)
-    .then(async(userCredential) => {
-    
-      const user = userCredential.user;
-      const userSnap = await getDoc(doc(db, "users", user.uid));
-
-    if (userSnap.exists()) {
-      const userData = userSnap.data();
-
-    if (userData.status === 'rejected') {
-    alert("Your account request has been rejected. Please contact administration for details.");
-    return; //rejected gets rejection alert
+  function showError(msg) {
+    errorDiv.textContent   = msg;
+    errorDiv.style.display = 'block';
   }
 
-      // no admin approval gets pending page
+  loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errorDiv.style.display = 'none';
+
+    const email    = document.getElementById('loginUser').value.trim();
+    const password = document.getElementById('loginPw').value;
+
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user     = userCredential.user;
+      const userRef  = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+
+      if (!userSnap.exists()) {
+        showError("User record not found.");
+        return;
+      }
+
+      const userData = userSnap.data();
+
+      // Reset failed attempts on successful login
+      if (userData.loginAttempts > 0) {
+        await updateDoc(userRef, { loginAttempts: 0 });
+      }
+
+      // Check if suspended — auto-lift if end date has passed
+      if (userData.status === 'suspended') {
+        const suspendedUntil = userData.suspendedUntil;
+        const today          = new Date().toISOString().split('T')[0];
+
+        if (suspendedUntil && today > suspendedUntil) {
+          // Suspension expired — automatically reactivate
+          await updateDoc(userRef, {
+            status:           'approved',
+            loginAttempts:    0,
+            suspendedFrom:    null,
+            suspendedUntil:   null,
+            suspensionReason: null
+          });
+          // Fall through and continue login normally
+        } else {
+          // Still suspended
+          await signOut(auth);
+          window.location.href = "suspend.html";
+          return;
+        }
+      }
+
+      // Check other statuses
+      if (userData.status === 'rejected') {
+        await signOut(auth);
+        alert("Your account request has been rejected. Please contact administration.");
+        return;
+      }
       if (userData.approved === false) {
         window.location.href = "pendingApproval.html";
+        return;
+      }
+
+      // Store session info
+      localStorage.setItem('role',     userData.role);
+      localStorage.setItem('username', userData.username);
+      localStorage.setItem('userId',   user.uid);
+
+      // Route based on role
+      if (userData.role === 'administrator') {
+        window.location.replace("adminDashboard.html");
+      } else if (userData.role === 'manager') {
+        window.location.replace("managerDashboard.html");
       } else {
-        // approval goes to dashboard
-        window.location.href = "accountantDashboard.html";
+        window.location.replace("accountantDashboard.html");
+      }
+
+    } catch (error) {
+      // Track failed attempts and suspend after 3
+      if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+        try {
+          const q         = query(collection(db, "users"), where("email", "==", document.getElementById('loginUser').value.trim()));
+          const querySnap = await getDocs(q);
+
+          if (!querySnap.empty) {
+            const userDoc    = querySnap.docs[0];
+            const userData   = userDoc.data();
+            const userDocRef = doc(db, "users", userDoc.id);
+            const logins     = (userData.loginAttempts || 0) + 1;
+
+            if (logins >= 3) {
+              await updateDoc(userDocRef, {
+                loginAttempts:    logins,
+                status:           "suspended",
+                suspendedFrom:    new Date().toISOString().split('T')[0],
+                suspendedUntil:   null,
+                suspensionReason: "Too many failed login attempts"
+              });
+              window.location.href = "suspend.html";
+              return;
+            } else {
+              await updateDoc(userDocRef, { loginAttempts: logins });
+              showError(`Incorrect password or email. Attempts remaining: ${3 - logins}`);
+              return;
+            }
+          } else {
+            showError("Login failed: Invalid email/password.");
+          }
+        } catch (err) {
+          showError("Login failed with error: " + err.message);
+        }
+      } else {
+        showError("Login failed: " + error.message);
       }
     }
-      })
-      .catch((error) => {
-        const errorDiv = document.getElementById('loginError');
-      errorDiv.textContent = "Login failed: " + error.message;
-        errorDiv.style.display = 'block';
-      });
   });
 </script>
-
 </body>
 </html>

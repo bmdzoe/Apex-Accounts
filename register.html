@@ -99,7 +99,7 @@
 <script type="module">
   import { auth, db } from './firebase-config.js';
   import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-  import { doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+  import { doc, setDoc, serverTimestamp, Timestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
   const registerForm = document.getElementById('registerForm');
   const errorDiv     = document.getElementById('registerError');
   registerForm.addEventListener('submit', async (e) => {
@@ -137,7 +137,7 @@
         loginAttempts:    0,
         role:             "accountant",
         createdAt:        serverTimestamp(),
-        passwordExpiry:   null,
+        passwordExpiry:   Timestamp.fromDate(new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)),
         passwordHistory:  []
       });
       window.location.href = "pendingApproval.html";
