@@ -10,7 +10,7 @@
 <body>
 
 <header>
-  <img src="assets/logo.png" alt="Logo" width="120">
+  <img src="assets/logo.png" alt="Logo" width="120" title="Apex Accounts logo">
 </header>
 
 <main>
@@ -19,13 +19,13 @@
 
   <form id="securityForm">
     <label>Security Question</label><br>
-    <input type="text" id="q1" value="What is the name of your first pet?" disabled><br><br>
+    <input type="text" id="q1" value="What is the name of your first pet?" disabled title="Your security question for password recovery"><br><br>
 
     <label for="a1">Answer</label><br>
-    <input type="text" id="a1" name="a1" required><br><br>
+    <input type="text" id="a1" name="a1" required title="Enter the answer to your security question"><br><br>
 
-    <button type="submit">Verify</button>
-    <a href="resetPassword.html">Cancel</a>
+    <button type="submit" title="Verify your answer and continue to password reset">Verify</button>
+    <a href="resetPassword.html" title="Cancel security question verification">Cancel</a>
   </form>
 </main>
 
@@ -49,7 +49,7 @@
 
         if(userSnap.exists()) {
           const userData = userSnap.data();
-          document.getElementById("q1").innerHTML = userData.securityQuestion; // change security question to user question
+          document.getElementById("q1").value = userData.securityQuestion; // change security question to user question
 
           if (answer === userData.securityAnswer) {
             window.location.href = "resetPassword.html";
@@ -67,6 +67,4 @@
 </script>
 
 </body>
-
 </html>
-

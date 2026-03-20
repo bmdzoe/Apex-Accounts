@@ -515,3 +515,39 @@ html, body {
   min-height: 100vh;
   overflow-y: auto;
 }
+.top-services {
+  display: flex;
+  justify-content: flex-start; 
+  align-items: center;
+  gap: 18px;
+  margin: 10px 0 10px 0;      
+  padding-left: 0;             
+  border-bottom: 1px solid #444;
+}
+
+.top-services span {
+  cursor: pointer;
+  color: #c8a96b;
+  font-weight: 500;
+  position: relative;
+}
+
+.top-services span:hover {
+  color: #ffffff;
+}
+
+.top-services span::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -4px;
+  width: 0%;
+  height: 2px;
+  background: #c8a96b;
+  transition: width 0.2s ease;
+}
+
+.top-services span:hover::after {
+  width: 100%;
+}
+

@@ -7,14 +7,45 @@
   <title>User Profile</title>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+
+  <script>
+    function openCalendar() {
+      window.open(
+        "calendar.html",
+        "CalendarPopup",
+        "width=500,height=550,left=100,top=100,resizable=yes,scrollbars=no"
+      );
+    }
+
+    function openHelp() {
+      window.open(
+        "help.html",
+        "HelpPopup",
+        "width=700,height=600,left=120,top=80,resizable=yes,scrollbars=yes"
+      );
+    }
+  </script>
 </head>
+
 <body>
 
-<header>
-  <img src="assets/logo.png" alt="Logo">
-  <div>
-    <span>Username: UserName</span>
-    <img src="assets/userAdmin.png" alt="User Picture" width="40" height="40">
+<header class="header-bar">
+  <img src="assets/logo.png" alt="Logo" width="120" title="Apex Accounts logo">
+
+  <div class="top-services">
+    <span onclick="openCalendar()" title="Open the calendar popup">Calendar</span>
+    <span onclick="window.location.href='chartOfAccounts.html'" title="Open the Chart of Accounts module">Chart of Accounts</span>
+    <span onclick="window.location.href='journalizing.html'" title="Open the Journalizing module">Journalizing</span>
+    <span onclick="window.location.href='ledger.html'" title="Open the Ledger module">Ledger</span>
+    <span onclick="openHelp()" title="Open help information for the software">Help</span>
+  </div>
+
+  <div class="user-area">
+    <span title="Displays the current logged in username">Username: AdminUser</span>
+    <a href="profile.html" title="Open your user profile">
+      <img src="assets/userAdmin.png" width="40" alt="User Profile">
+    </a>
+    <a href="login.html" title="Log out of the system">Logout</a>
   </div>
 </header>
 
@@ -24,27 +55,26 @@
   <form id="profileForm">
 
     <label>User ID</label><br>
-    <input type="text" id="userId" disabled><br><br>
+    <input type="text" id="userId" disabled title="Displays your system user ID"><br><br>
 
     <label>First Name</label><br>
-    <input type="text" id="firstName"><br><br>
+    <input type="text" id="firstName" title="Enter or update your first name"><br><br>
 
     <label>Last Name</label><br>
-    <input type="text" id="lastName"><br><br>
+    <input type="text" id="lastName" title="Enter or update your last name"><br><br>
 
     <label>Email Address</label><br>
-    <input type="email" id="email" disabled><br><br>
+    <input type="email" id="email" disabled title="Displays your email address"><br><br>
 
     <label>Address</label><br>
-    <input type="text" id="address"><br><br>
+    <input type="text" id="address" title="Enter or update your mailing address"><br><br>
 
     <label>Date of Birth</label><br>
-    <input type="date" id="dob"><br><br>
+    <input type="date" id="dob" title="Select or update your date of birth"><br><br>
 
-    <button type="submit">Save Changes</button>
-    <a href="accountantDashboard.html">Cancel</a>
+    <button type="submit" title="Save the changes made to your profile">Save Changes</button>
+    <a href="accountantDashboard.html" title="Cancel changes and return to the accountant dashboard">Cancel</a>
 
-  </form>
   </form>
 </main>
 
@@ -66,18 +96,15 @@
       if (docSnap.exists()) {
         const userData = docSnap.data();
         
-       // getting database info
+        // getting database info
         document.getElementById('userId').value = user.uid;
         document.getElementById('email').value = user.email;
         document.getElementById('firstName').value = userData.firstName || "";
         document.getElementById('lastName').value = userData.lastName || "";
         document.getElementById('address').value = userData.address || "";
         document.getElementById('dob').value = userData.dob || "";
-        
-     
       }
     } else {
-     
       window.location.href = "login.html";
     }
   });
@@ -89,8 +116,7 @@
     if (currentUserUid) {
       try {
         const docRef = doc(db, "users", currentUserUid);
-        
-       
+
         await updateDoc(docRef, {
           firstName: document.getElementById('firstName').value,
           lastName: document.getElementById('lastName').value,

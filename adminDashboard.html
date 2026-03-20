@@ -6,113 +6,139 @@
   <title>Administrator Dashboard</title>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+
+  <script>
+    function openCalendar() {
+      window.open(
+        "calendar.html",
+        "CalendarPopup",
+        "width=500,height=550,left=100,top=100,resizable=yes,scrollbars=no"
+      );
+    }
+
+    function openHelp() {
+      window.open(
+        "help.html",
+        "HelpPopup",
+        "width=700,height=600,left=120,top=80,resizable=yes,scrollbars=yes"
+      );
+    }
+  </script>
 </head>
 <body>
 
-<header>
-  <img src="assets/logo.png" alt="Logo" width="120">
+<header class="header-bar">
+  <img src="assets/logo.png" alt="Logo" width="120" title="Apex Accounts logo">
 
-  <div>
+  <div class="top-services">
+    <span onclick="openCalendar()" title="Open the calendar popup">Calendar</span>
+    <span onclick="window.location.href='chartOfAccounts.html'" title="Open the Chart of Accounts module">Chart of Accounts</span>
+    <span onclick="window.location.href='journalizing.html'" title="Open the Journalizing module">Journalizing</span>
+    <span onclick="window.location.href='ledger.html'" title="Open the Ledger module">Ledger</span>
+    <span onclick="openHelp()" title="Open help information for the software">Help</span>
+  </div>
+
+  <div class="user-area">
     <span>Username: AdminUser</span>
-    <a href="profile.html">
+    <a href="profile.html" title="Open your user profile">
       <img src="assets/userAdmin.png" alt="User Profile" width="40" height="40">
     </a>
-	<a href="login.html">Logout</a>
+    <a href="login.html" title="Log out of the system">Logout</a>
   </div>
 </header>
 
 <main>
   <h1>Administrator Dashboard</h1>
-<div style="margin: 30px 0; display: flex; gap: 50px;">
-<div>
-  <h3>Total Users</h3>
-  <p id="totalUsers">0</p>
+
+  <div style="margin: 30px 0; display: flex; gap: 50px;">
+    <div title="Displays the total number of users in the system">
+      <h3>Total Users</h3>
+      <p id="totalUsers">0</p>
+    </div>
+
+    <div title="Displays the number of users waiting for approval">
+      <h3>Pending Users</h3>
+      <p id="pendingUsers">0</p>
+    </div>
+
+    <div title="Displays the number of approved users">
+      <h3>Approved Users</h3>
+      <p id="approvedUsers">0</p>
+    </div>
+
+    <div title="Displays the number of rejected users">
+      <h3>Rejected Users</h3>
+      <p id="rejectedUsers">0</p>
+    </div>
   </div>
 
-  <div>
-    <h3>Pending Users</h3>
-    <p id="pendingUsers">0</p>
-  </div>
-
-  <div>
-    <h3>Approved Users</h3>
-    <p id="approvedUsers">0</p>
-  </div>
-
-<div>
-    <h3>Rejected Users</h3>
-    <p id="rejectedUsers">0</p>
-  </div>
-
-</div>
   <nav>
     <ul>
-      <li><a href="createUser.html">Create User</a></li>
-      <li><a href="updateUser.html">Update User</a></li>
-      <li><a href="activateDeactivateUser.html">Activate/Deactivate User</a></li>
-      <li><a href="viewUsersReport.html">View All Users Report</a></li>
-      <li><a href="suspendUser.html">Suspend User</a></li>
-      <li><a href="expiredPasswordsReport.html">Expired Passwords Report</a></li>
-      <li><a href="sendEmail.html">Send Email</a></li>
-<li><a href="accessRequests.html">Pending Approvals (Approve/Reject)</a></li>
+      <li><a href="createUser.html" title="Create a new user account">Create User</a></li>
+      <li><a href="updateUser.html" title="Update information for an existing user">Update User</a></li>
+      <li><a href="activateDeactivateUser.html" title="Activate or deactivate a user account">Activate/Deactivate User</a></li>
+      <li><a href="viewUsersReport.html" title="View a report of all users in the system">View All Users Report</a></li>
+      <li><a href="suspendUser.html" title="Suspend a user for a selected date range">Suspend User</a></li>
+      <li><a href="expiredPasswordsReport.html" title="View users with expired passwords">Expired Passwords Report</a></li>
+      <li><a href="sendEmail.html" title="Send an email from within the system">Send Email</a></li>
+      <li><a href="accessRequests.html" title="Review and approve or reject pending access requests">Pending Approvals (Approve/Reject)</a></li>
     </ul>
   </nav>
 </main>
+
 <script type="module">
-import { auth, db } from "./firebase-config.js";
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { collection, getDocs, query, where, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+  import { auth, db } from "./firebase-config.js";
+  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  import { collection, getDocs, query, where, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-const totalUsersEl = document.getElementById("totalUsers");
-const pendingUsersEl = document.getElementById("pendingUsers");
-const approvedUsersEl = document.getElementById("approvedUsers");
-const rejectedUsersEl = document.getElementById("rejectedUsers");
+  const totalUsersEl = document.getElementById("totalUsers");
+  const pendingUsersEl = document.getElementById("pendingUsers");
+  const approvedUsersEl = document.getElementById("approvedUsers");
+  const rejectedUsersEl = document.getElementById("rejectedUsers");
 
-async function loadDashboardData() {
-  const usersRef = collection(db, "users");
+  async function loadDashboardData() {
+    const usersRef = collection(db, "users");
 
+    const allUsersSnapshot = await getDocs(usersRef);
+    totalUsersEl.textContent = allUsersSnapshot.size;
 
-  const allUsersSnapshot = await getDocs(usersRef);
-  totalUsersEl.textContent = allUsersSnapshot.size;
+    const pendingQuery = query(usersRef, where("status", "==", "pending"));
+    const pendingSnapshot = await getDocs(pendingQuery);
+    pendingUsersEl.textContent = pendingSnapshot.size;
 
+    const approvedQuery = query(usersRef, where("status", "==", "approved"));
+    const approvedSnapshot = await getDocs(approvedQuery);
+    approvedUsersEl.textContent = approvedSnapshot.size;
 
-  const pendingQuery = query(usersRef, where("status", "==", "pending"));
-  const pendingSnapshot = await getDocs(pendingQuery);
-  pendingUsersEl.textContent = pendingSnapshot.size;
-
-
-  const approvedQuery = query(usersRef, where("status", "==", "approved"));
-  const approvedSnapshot = await getDocs(approvedQuery);
-  approvedUsersEl.textContent = approvedSnapshot.size;
-
-const rejectedQuery = query(usersRef, where("status", "==", "rejected"));
-const rejectedSnapshot = await getDocs(rejectedQuery);
-rejectedUsersEl.textContent = rejectedSnapshot.size;
-}
+    const rejectedQuery = query(usersRef, where("status", "==", "rejected"));
+    const rejectedSnapshot = await getDocs(rejectedQuery);
+    rejectedUsersEl.textContent = rejectedSnapshot.size;
+  }
 
   onAuthStateChanged(auth, async (user) => {
-  if (!user) {
-    window.location.href = "login.html";
-    return;
-  }
+    if (!user) {
+      window.location.href = "login.html";
+      return;
+    }
 
-  const userRef = doc(db, "users", user.uid);
-  const userSnap = await getDoc(userRef);
+    const userRef = doc(db, "users", user.uid);
+    const userSnap = await getDoc(userRef);
 
-  if (!userSnap.exists()) {
-    window.location.href = "login.html";
-    return;
-  }
-  const userData = userSnap.data();
+    if (!userSnap.exists()) {
+      window.location.href = "login.html";
+      return;
+    }
 
-  if (userData.role !== "admin") {
-    window.location.href = "accountantDashboard.html";
-    return;
-  }
+    const userData = userSnap.data();
 
-  loadDashboardData();
-});
+    if (userData.role !== "admin") {
+      window.location.href = "accountantDashboard.html";
+      return;
+    }
+
+    loadDashboardData();
+  });
 </script>
-</body>
 
+</body>
 </html>

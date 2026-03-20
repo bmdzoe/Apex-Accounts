@@ -6,29 +6,59 @@
   <title>Pending Approvals</title>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+
+  <script>
+    function openCalendar() {
+      window.open(
+        "calendar.html",
+        "CalendarPopup",
+        "width=500,height=550,left=100,top=100,resizable=yes,scrollbars=no"
+      );
+    }
+
+    function openHelp() {
+      window.open(
+        "help.html",
+        "HelpPopup",
+        "width=700,height=600,left=120,top=80,resizable=yes,scrollbars=yes"
+      );
+    }
+  </script>
 </head>
 <body>
-<header>
-  <img src="assets/logo.png" alt="Logo" width="120">
-  <div>
+
+<header class="header-bar">
+  <img src="assets/logo.png" alt="Logo" width="120" title="Apex Accounts logo">
+
+  <div class="top-services">
+    <span onclick="openCalendar()" title="Open the calendar popup">Calendar</span>
+    <span onclick="window.location.href='chartOfAccounts.html'" title="Open the Chart of Accounts module">Chart of Accounts</span>
+    <span onclick="window.location.href='journalizing.html'" title="Open the Journalizing module">Journalizing</span>
+    <span onclick="window.location.href='ledger.html'" title="Open the Ledger module">Ledger</span>
+    <span onclick="openHelp()" title="Open help information for the software">Help</span>
+  </div>
+
+  <div class="user-area">
     <span>Username: AdminUser</span>
-    <a href="profile.html">
+    <a href="profile.html" title="Open your user profile">
       <img src="assets/userAdmin.png" alt="User Profile" width="40" height="40">
     </a>
-	<a href="login.html">Logout</a>
+    <a href="login.html" title="Log out of the system">Logout</a>
   </div>
 </header>
+
 <main>
   <h1>Pending Approvals</h1>
-  <table border="1" cellpadding="8" cellspacing="0">
+
+  <table border="1" cellpadding="8" cellspacing="0" title="Displays user access requests waiting for administrator review">
     <thead>
       <tr>
-        <th>Request ID</th>
-        <th>Name</th>
-        <th>Email</th>
-        <th>DOB</th>
-        <th>Address</th>
-        <th>Action</th>
+        <th title="Unique identifier for the access request">Request ID</th>
+        <th title="Full name of the requesting user">Name</th>
+        <th title="Email address of the requesting user">Email</th>
+        <th title="Date of birth of the requesting user">DOB</th>
+        <th title="Address provided by the requesting user">Address</th>
+        <th title="Available action for this request">Action</th>
       </tr>
     </thead>
     <tbody>
@@ -36,32 +66,43 @@
   </table>
 
   <br>
-  <a href="adminDashboard.html">Back</a>
+  <a href="adminDashboard.html" title="Return to the administrator dashboard">Back</a>
 </main>
-</body>
+
 <script type="module">
   import { db } from './firebase-config.js';
   import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
   async function loadPendingUsers() {
     const tbody = document.querySelector('tbody');
-    tbody.innerHTML = ""; 
-    const q = query(collection(db, "users"), where("approved", "==", false), where("status", "==", "pending"));
+    tbody.innerHTML = "";
+
+    const q = query(
+      collection(db, "users"),
+      where("approved", "==", false),
+      where("status", "==", "pending")
+    );
+
     const querySnapshot = await getDocs(q);
+
     querySnapshot.forEach((doc) => {
       const user = doc.data();
       const row = `
         <tr>
-          <td>${doc.id.substring(0, 5)}...</td>
-          <td>${user.firstName} ${user.lastName}</td>
-          <td>${user.email}</td>
-          <td>${user.dob}</td>
-          <td>${user.address}</td>
-          <td><a href="approveReject.html?uid=${doc.id}">Review</a></td>
+          <td title="Unique identifier for the access request">${doc.id.substring(0, 5)}...</td>
+          <td title="Full name of the requesting user">${user.firstName} ${user.lastName}</td>
+          <td title="Email address of the requesting user">${user.email}</td>
+          <td title="Date of birth of the requesting user">${user.dob}</td>
+          <td title="Address provided by the requesting user">${user.address}</td>
+          <td><a href="approveReject.html?uid=${doc.id}" title="Review this access request">Review</a></td>
         </tr>
       `;
       tbody.innerHTML += row;
     });
   }
+
   loadPendingUsers();
 </script>
+
+</body>
 </html>
