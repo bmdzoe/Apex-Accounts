@@ -1,0 +1,361 @@
+<!-- help.html -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Apex Accounts Help</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+
+</head>
+<body>
+
+<main class="help-page">
+  <h1>Apex Accounts Help</h1>
+  <p>This help page provides guidance for using Apex Accounts. Topics are organized by system area and user role.</p>
+
+  <section>
+    <h2>Table of Contents</h2>
+    <ul>
+      <li><a href="#overview">1. System Overview</a></li>
+      <li><a href="#roles">2. User Roles</a></li>
+      <li><a href="#navigation">3. Navigation and Common Page Features</a></li>
+      <li><a href="#login-security">4. Login and Security</a></li>
+      <li><a href="#user-management">5. User Management</a></li>
+      <li><a href="#chart-of-accounts">6. Chart of Accounts</a></li>
+      <li><a href="#journalizing-ledger">7. Journalizing and Ledger</a></li>
+      <li><a href="#adjusting-reports">8. Adjusting Entries and Financial Reports</a></li>
+      <li><a href="#dashboard-ratios">9. Dashboard and Ratio Analysis</a></li>
+      <li><a href="#files-documents">10. Source Documents and Attachments</a></li>
+      <li><a href="#event-logs">11. Event Logs</a></li>
+      <li><a href="#errors">12. Error Messages</a></li>
+      <li><a href="#accounting-reference">13. Accounting Reference</a></li>
+    </ul>
+  </section>
+
+  <section id="overview">
+    <h2>1. System Overview</h2>
+    <p>Apex Accounts is a web-based accounting system designed for use by administrators, managers, and accountants. The application is intended to be accessible across devices and browsers while maintaining a consistent layout and built-in help throughout the software.</p>
+    <p>The system supports core accounting and finance functions including chart of accounts, journalizing, ledger review, user management, approval workflows, financial reports, and financial ratio review.</p>
+  </section>
+
+  <section id="roles">
+    <h2>2. User Roles</h2>
+    <p>This section explains what each user role is allowed to do in the system. Use it to understand the difference between administrator, manager, and accountant access.</p>
+
+    <h3>Administrator</h3>
+    <ul>
+      <li>Create users and assign roles</li>
+      <li>Update user information</li>
+      <li>Activate or deactivate users</li>
+      <li>Suspend users for a selected date range</li>
+      <li>Approve or reject access requests</li>
+      <li>View all users report</li>
+      <li>View expired passwords report</li>
+      <li>Send email within the system</li>
+      <li>Add, view, edit, or deactivate accounts in the chart of accounts</li>
+      <li>View account event logs</li>
+    </ul>
+
+    <h3>Manager</h3>
+    <ul>
+      <li>View accounts in the chart of accounts</li>
+      <li>Create journal entries using valid accounts</li>
+      <li>Approve or reject journal entries submitted by accountants</li>
+      <li>Enter rejection comments when rejecting entries</li>
+      <li>View pending, approved, and rejected journal entries</li>
+      <li>Generate, save, email, print, and review financial reports</li>
+      <li>Approve or reject adjusting entries</li>
+      <li>View ledgers and event logs</li>
+    </ul>
+
+    <h3>Accountant</h3>
+    <ul>
+      <li>View accounts in the chart of accounts</li>
+      <li>Create and submit journal entries</li>
+      <li>Create and submit adjusting journal entries</li>
+      <li>Attach source documents to journal entries</li>
+      <li>View pending, approved, and rejected entries</li>
+      <li>View ledgers and event logs</li>
+      <li>Send email to manager or administrator from account-related pages</li>
+    </ul>
+  </section>
+
+  <section id="navigation">
+    <h2>3. Navigation and Common Page Features</h2>
+    <p>This section explains the basic layout and tools that appear across the system. Use it to guide you on how to move between pages and use common navigation, tooltips, and calendar features.</p>
+    <ul>
+      <li>The software logo appears on all pages.</li>
+      <li>The logged-in username and user image appear at the top of the page.</li>
+      <li>Top navigation provides quick access to major services such as Calendar, Chart of Accounts, Journalizing, Ledger, and Help.</li>
+      <li>A popup calendar is available from the top of the page.</li>
+      <li>Each page follows a consistent color scheme and layout.</li>
+      <li>Tooltips are available on controls to explain their purpose.</li>
+      <li>This Help page provides information about the entire software by topic.</li>
+    </ul>
+  </section>
+
+  <section id="login-security">
+    <h2>4. Login and Security</h2>
+    <p> This section explains the rules for logging in and keeping account information secure.Use it to review password requirements, reset steps, and other security related features.</p>
+    <ul>
+      <li>Only registered users can log in.</li>
+      <li>Passwords must be at least 8 characters long.</li>
+      <li>Passwords must start with a letter.</li>
+      <li>Passwords must include a letter, a number, and a special character.</li>
+      <li>Passwords used in the past cannot be reused during password reset.</li>
+      <li>Password information must be stored securely.</li>
+      <li>After three unsuccessful login attempts, the user is suspended.</li>
+      <li>Users receive a notification three days before password expiration.</li>
+      <li>Forgot Password requires email, user ID, and security question verification.</li>
+      <li>All login information is stored in the database.</li>
+    </ul>
+  </section>
+
+  <section id="user-management">
+    <h2>5. User Management</h2>
+    <p>This section explains how user accounts are created, review, and managed in the system. It also shows what adminstators can do when updating roles, approvals, and account status.</p>
+
+    <h3>Creating a New User Request</h3>
+    <p>New users can request access by choosing the create account option and entering required personal information such as first name, last name, address, and date of birth. The administrator reviews the request and approves or rejects it.</p>
+
+    <h3>Username Rules</h3>
+    <p>Usernames are generated using the first name initial, full last name, and a four-digit month-year format based on account creation date.</p>
+
+    <h3>Administrator User Functions</h3>
+    <ul>
+      <li>Create users</li>
+      <li>Update existing user information</li>
+      <li>Activate or deactivate users</li>
+      <li>Suspend users for a selected time period</li>
+      <li>Review pending approvals</li>
+      <li>Send email notifications</li>
+      <li>View users reports</li>
+      <li>View expired password reports</li>
+    </ul>
+  </section>
+
+  <section id="chart-of-accounts">
+    <h2>6. Chart of Accounts</h2>
+    <p>The Chart of Accounts stores and manages all valid accounts used throughout the system.</p>
+
+    <h3>Account Information</h3>
+    <ul>
+      <li>Account name</li>
+      <li>Account number</li>
+      <li>Account description</li>
+      <li>Normal side</li>
+      <li>Account category</li>
+      <li>Account subcategory</li>
+      <li>Initial balance</li>
+      <li>Debit</li>
+      <li>Credit</li>
+      <li>Balance</li>
+      <li>Date/time added</li>
+      <li>User ID</li>
+      <li>Order</li>
+      <li>Statement type</li>
+      <li>Comment</li>
+    </ul>
+
+    <h3>Chart of Accounts Rules</h3>
+    <ul>
+      <li>Duplicate account names or numbers are not allowed.</li>
+      <li>Account numbers cannot contain decimal points or letters.</li>
+      <li>All monetary values must display two decimal places.</li>
+      <li>Monetary values should display commas when appropriate.</li>
+      <li>Accounts with balances greater than zero cannot be deactivated.</li>
+      <li>Accounts can be made inactive but not deleted.</li>
+      <li>Users can search by account number or account name.</li>
+      <li>Users can filter accounts by tokens such as name, number, category, subcategory, and amount.</li>
+      <li>Clicking an account should open its ledger.</li>
+    </ul>
+
+    <h3>Role Access</h3>
+    <ul>
+      <li>Administrator: can add, view, edit, and deactivate accounts</li>
+      <li>Manager: can view accounts only</li>
+      <li>Accountant: can view accounts only</li>
+    </ul>
+  </section>
+
+  <section id="journalizing-ledger">
+    <h2>7. Journalizing and Ledger</h2>
+    <p>This section explains how journal entries are created, reviewed, and posted to the ledger. It also outlines the rules for balancing entries, apporval status, and ledger activity.</p>
+
+    <h3>Journal Entry Rules</h3>
+    <ul>
+      <li>Only accounts found in the chart of accounts can be used.</li>
+      <li>Each transaction must contain at least one debit and one credit.</li>
+      <li>Debits must equal credits before submission.</li>
+      <li>Multiple debits and multiple credits are allowed.</li>
+      <li>Debits appear before credits in each journal entry.</li>
+      <li>Invalid transactions cannot be submitted.</li>
+      <li>Accountants can cancel or reset before submission, but cannot delete after submission.</li>
+      <li>Managers approve or reject submitted entries.</li>
+      <li>Rejected entries require a comment from the manager.</li>
+      <li>Managers receive notification when an entry is submitted for approval.</li>
+    </ul>
+
+    <h3>Journal Entry Status</h3>
+    <ul>
+      <li>Pending Approval</li>
+      <li>Approved</li>
+      <li>Rejected</li>
+    </ul>
+
+    <h3>Searching and Filtering</h3>
+    <ul>
+      <li>Search journal entries by account name, amount, or date.</li>
+      <li>Filter entries by date and by status category.</li>
+    </ul>
+
+    <h3>Ledger</h3>
+    <ul>
+      <li>Approved entries are reflected in the ledger.</li>
+      <li>Each ledger row shows date, description, debit, credit, and balance.</li>
+      <li>The balance after each posted transaction must be accurate.</li>
+      <li>The post reference column is clickable and opens the journal entry that created the ledger record.</li>
+      <li>Users can filter the ledger by date or date range and search by account name or amount.</li>
+    </ul>
+  </section>
+
+  <section id="adjusting-reports">
+    <h2>8. Adjusting Entries and Financial Reports</h2>
+    <p>This section explains how adjusting entries are submitted and how finachial reports are generated from approved data. Use it to understand what users can do with reports and which rules still apply to adjusting entries.</p>
+
+    <h3>Adjusting Entries</h3>
+    <ul>
+      <li>Accountants can prepare and submit adjusting journal entries.</li>
+      <li>Managers can approve or reject adjusting entries.</li>
+      <li>Rejected adjusting entries require a comment.</li>
+      <li>Approved adjusting entries update the ledger and financial statements.</li>
+      <li>All normal journal entry rules still apply.</li>
+    </ul>
+
+    <h3>Financial Reports</h3>
+    <ul>
+      <li>Trial Balance</li>
+      <li>Income Statement</li>
+      <li>Balance Sheet</li>
+      <li>Retained Earnings Statement</li>
+      <li>Cash Flow Statement</li>
+    </ul>
+
+    <p>Managers can generate, view, save, email, or print financial reports for a selected date or date range.</p>
+  </section>
+
+  <section id="dashboard-ratios">
+    <h2>9. Dashboard and Ratio Analysis</h2>
+    <p>This section explains what information is shown on the dashboard and how ratio analysis is presented to the user. It also helps users understand alerts, summaries, and the meaning of the dashboard color indicators.</p>
+    <ul>
+      <li>All logged-in users can view dashboard ratio information where data is available.</li>
+      <li>The dashboard may display important system messages such as entries waiting for approval.</li>
+      <li>Ratios use three color states:</li>
+      <li>Green: good</li>
+      <li>Yellow: warning or borderline range</li>
+      <li>Red: needs closer review</li>
+    </ul>
+  </section>
+
+  <section id="files-documents">
+    <h2>10. Source Documents and Attachments</h2>
+    <p>Source documents can be attached to journal entries and adjusting entries. Supported file types include:</p>
+    <ul>
+      <li>PDF</li>
+      <li>Word</li>
+      <li>Excel</li>
+      <li>CSV</li>
+      <li>JPG</li>
+      <li>PNG</li>
+    </ul>
+  </section>
+
+  <section id="event-logs">
+    <h2>11. Event Logs</h2>
+    <p>Event logs record data changes made by users. Each event log stores:</p>
+    <ul>
+      <li>Unique event ID</li>
+      <li>User ID of the person making the change</li>
+      <li>Date and time of the change</li>
+      <li>Before image of the record when applicable</li>
+      <li>After image of the record</li>
+    </ul>
+    <p>If an account is newly created, there is no before image. Event logs can be viewed as part of account review.</p>
+  </section>
+
+  <section id="errors">
+    <h2>12. Error Messages</h2>
+    <p>This section explains how error messages are used to help users fix problems in the system. Use it to understand what common errors mean and which issues needs to be corrected.</p>
+    <ul>
+      <li>Error messages must be meaningful and help the user fix the issue.</li>
+      <li>Error messages are stored in a database table.</li>
+      <li>Error messages are displayed in red.</li>
+      <li>When the cause of the error is fixed, the error should disappear.</li>
+    </ul>
+
+    <h3>Examples</h3>
+    <ul>
+      <li>Password does not meet complexity requirements.</li>
+      <li>Debits and credits do not balance.</li>
+      <li>Selected account is not valid.</li>
+      <li>Duplicate account number or account name is not allowed.</li>
+      <li>User ID not found.</li>
+      <li>End date must be after start date.</li>
+    </ul>
+  </section>
+
+  <section id="accounting-reference">
+    <h2>13. Accounting Reference</h2>
+    <p> This section provides basic accounting information that supports the features used throughout the system. Use it as a reference for equations,balances,statement areas, and other accounting terms.</p>
+
+    <h3>Accounting Equation</h3>
+    <p>Assets = Liabilities + Equity</p>
+
+    <h3>Natural Balances</h3>
+    <ul>
+      <li>Assets normally increase with debits</li>
+      <li>Liabilities normally increase with credits</li>
+      <li>Equity normally increases with credits</li>
+      <li>Revenue normally increases with credits</li>
+      <li>Expenses normally increase with debits</li>
+    </ul>
+
+    <h3>Common Financial Statement Areas</h3>
+    <ul>
+      <li>Balance Sheet</li>
+      <li>Income Statement</li>
+      <li>Statement of Owners' Equity</li>
+      <li>Cash Flow Statement</li>
+    </ul>
+
+    <h3>Inventory and Costing Topics</h3>
+    <ul>
+      <li>FIFO</li>
+      <li>LIFO</li>
+      <li>Average Cost</li>
+      <li>Perpetual Inventory</li>
+      <li>Periodic Inventory</li>
+      <li>Cost of Goods Sold</li>
+    </ul>
+
+    <h3>Useful Concepts</h3>
+    <ul>
+      <li>Matching principle</li>
+      <li>Revenue recognition</li>
+      <li>Consistency</li>
+      <li>Conservatism</li>
+      <li>Materiality</li>
+      <li>Full disclosure</li>
+      <li>Going concern</li>
+      <li>Economic entity</li>
+      <li>Monetary unit</li>
+      <li>Time period assumption</li>
+    </ul>
+  </section>
+
+</main>
+
+</body>
+</html>
