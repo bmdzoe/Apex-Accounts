@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>System Event Logs - Apex Accounts</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+
+  <script>
+    function openCalendar() {
+      window.open("calendar.html", "CalendarPopup", "width=500,height=550,left=100,top=100,resizable=yes,scrollbars=no");
+    }
+    function openHelp() {
+      window.open("help.html", "HelpPopup", "width=700,height=600,left=120,top=80,resizable=yes,scrollbars=yes");
+    }
+  </script>
+</head>
+<body>
+
+<header class="header-bar">
+  <img src="assets/logo.png" alt="Logo" width="120" title="Apex Accounts logo">
+
+  <div class="top-services">
+    <span onclick="openCalendar()" title="Open the calendar popup">Calendar</span>
+    <span onclick="window.location.href='chartOfAccounts.html'" title="Open the Chart of Accounts module">Chart of Accounts</span>
+    <span onclick="window.location.href='journalizing.html'" title="Open the Journalizing module">Journalizing</span>
+    <span onclick="window.location.href='ledger.html'" title="Open the Ledger module">Ledger</span>
+    <span onclick="openHelp()" title="Open help information for the software">Help</span>
+  </div>
+
+  <div class="user-area">
+    <span id="headerUsername">Username: AdminUser</span>
+    <a href="login.html" onclick="localStorage.clear()" title="Log out of the system">Logout</a>
+  </div>
+</header>
+
+<main style="max-width: 1200px;">
+  <h1>System Event Logs</h1>
+  <p>Audit trail of all account creations, modifications, and deactivations.</p>
+  
+  <p id="loadingMsg">Loading event logs...</p>
+  <p id="emptyMsg" style="display:none;">No events logged yet.</p>
+
+  <div style="overflow-x: auto;">
+    <table border="1" cellpadding="8" cellspacing="0" id="logsTable" style="display:none; width: 100%; min-width: 1000px;" title="Displays the before and after image of system data changes">
+      <thead>
+        <tr>
+          <th title="Date and time the change occurred">Date & Time</th>
+          <th title="Unique auto-generated ID for this event">Event ID</th>
+          <th title="User who performed the action">User ID</th>
+          <th title="The type of action performed">Action</th>
+          <th title="The data before the change">Before Image</th>
+          <th title="The data after the change">After Image</th>
+        </tr>
+      </thead>
+      <tbody id="logsBody"></tbody>
+    </table>
+  </div>
+
+  <br>
+  <a href="adminDashboard.html" title="Return to dashboard">Back to Dashboard</a>
+</main>
+
+<script type="module">
+  import { db } from './firebase-config.js';
+  import { collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+  const username = localStorage.getItem('username');
+  if (username) document.getElementById('headerUsername').textContent = 'Username: ' + username;
+
+  function formatData(dataObj) {
+    if (!dataObj) return "<em>Null (New Record)</em>";
+    let formatted = "<ul style='margin:0; padding-left:15px; font-size: 0.8rem;'>";
+    for (const [key, value] of Object.entries(dataObj)) {
+      if(key !== 'createdAt' && key !== 'updatedAt' && key !== 'timestamp') {
+        formatted += `<li><strong>${key}:</strong> ${value}</li>`;
+      }
+    }
+    formatted += "</ul>";
+    return formatted;
+  }
+
+  async function loadLogs() {
+    const tbody = document.getElementById('logsBody');
+
+    try {
+      // to get the logs ordered it by most recent
+      const q = query(collection(db, "eventLogs"), orderBy("timestamp", "desc"));
+      const snapshot = await getDocs(q);
+      
+      document.getElementById('loadingMsg').style.display = 'none';
+
+      if (snapshot.empty) {
+        document.getElementById('emptyMsg').style.display = 'block';
+        return;
+      }
+
+      snapshot.forEach((docSnap) => {
+        const log = docSnap.data();
+        const eventId = docSnap.id;
+        const dateStr = log.timestamp ? log.timestamp.toDate().toLocaleString() : 'Unknown Time';
+        
+        const row = `
+          <tr>
+            <td>${dateStr}</td>
+            <td style="font-family: monospace;">${eventId}</td>
+            <td>${log.userId || 'System'}</td>
+            <td><strong>${log.eventType}</strong></td>
+            <td>${formatData(log.before)}</td>
+            <td>${formatData(log.after)}</td>
+          </tr>
+        `;
+        tbody.innerHTML += row;
+      });
+
+      document.getElementById('logsTable').style.display = 'table';
+    } catch (err) {
+      document.getElementById('loadingMsg').textContent = 'Failed to load logs. Ensure accounts have been added first so the database collection exists.';
+      console.error(err);
+    }
+  }
+
+  loadLogs();
+</script>
+
+</body>
+</html>
