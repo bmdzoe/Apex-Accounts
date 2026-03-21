@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Send Email</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+
+  <script>
+    function openCalendar() {
+      window.open(
+        "calendar.html",
+        "CalendarPopup",
+        "width=500,height=550,left=100,top=100,resizable=yes,scrollbars=no"
+      );
+    }
+
+    function openHelp() {
+      window.open(
+        "help.html",
+        "HelpPopup",
+        "width=700,height=600,left=120,top=80,resizable=yes,scrollbars=yes"
+      );
+    }
+  </script>
+</head>
+<body>
+
+<header class="header-bar">
+  <img src="assets/logo.png" alt="Logo" width="120" title="Apex Accounts logo">
+
+  <div class="top-services">
+    <span onclick="openCalendar()" title="Open the calendar popup">Calendar</span>
+    <span onclick="window.location.href='chartOfAccounts.html'" title="Open the Chart of Accounts module">Chart of Accounts</span>
+    <span onclick="window.location.href='journalizing.html'" title="Open the Journalizing module">Journalizing</span>
+    <span onclick="window.location.href='ledger.html'" title="Open the Ledger module">Ledger</span>
+    <span onclick="openHelp()" title="Open help information for the software">Help</span>
+  </div>
+
+  <div class="user-area">
+    <span>Username: AdminUser</span>
+    <a href="profile.html" title="Open your user profile">
+      <img src="assets/userAdmin.png" alt="User Profile" width="40" height="40">
+    </a>
+    <a href="login.html" title="Log out of the system">Logout</a>
+  </div>
+</header>
+
+<main>
+  <h1>Send Email</h1>
+
+  <form action="#" method="get">
+
+    <label for="email">To:</label><br>
+    <input type="email" id="email" name="email" required title="Enter the recipient's email address"><br><br>
+
+    <label for="fromEmail">From:</label><br>
+    <input type="email" id="fromEmail" value="apexhelper12@gmail.com (Apex-Accounts Admin)" disabled title="Displays the sender email address"><br><br>
+
+    <label for="subject">Subject</label><br>
+    <input type="text" id="subject" name="subject" required title="Enter the email subject line"><br><br>
+
+    <label for="message">Message</label><br>
+    <textarea id="message" name="message" rows="8" required title="Enter the message to send"></textarea><br><br>
+
+    <button type="submit" title="Send this email message">Send</button>
+    <a href="adminDashboard.html" title="Cancel and return to the administrator dashboard">Cancel</a>
+  </form>
+</main>
+
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+<script type="text/javascript">
+  (function() {
+    emailjs.init("cC6e6ZNLke2V3BRfU");
+  })();
+
+  const sendEmail = (emailData) => {
+    emailjs.send("service_nnjzk4j", "template_r50wjct", {
+      recipientEmail: emailData.recipient,
+      subject: emailData.subject,
+      message: emailData.message
+    }).then(() => {
+      alert("Email sent successfully!");
+    }, (error) => {
+      alert("Failed to send email: " + JSON.stringify(error));
+    });
+  };
+</script>
+
+<script type="text/javascript">
+  document.querySelector('form').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    // getting form values to send
+    const recipientEmail = document.getElementById('email').value;
+    const emailSubject = document.getElementById('subject').value;
+    const emailMessage = document.getElementById('message').value;
+
+    sendEmail({
+      recipient: recipientEmail,
+      subject: emailSubject,
+      message: emailMessage
+    });
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Approve / Reject Request</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+
+  <script>
+    function openCalendar() {
+      window.open(
+        "calendar.html",
+        "CalendarPopup",
+        "width=500,height=550,left=100,top=100,resizable=yes,scrollbars=no"
+      );
+    }
+
+    function openHelp() {
+      window.open(
+        "help.html",
+        "HelpPopup",
+        "width=700,height=600,left=120,top=80,resizable=yes,scrollbars=yes"
+      );
+    }
+  </script>
+</head>
+<body>
+
+<header class="header-bar">
+  <img src="assets/logo.png" alt="Logo" width="120" title="Apex Accounts logo">
+
+  <div class="top-services">
+    <span onclick="openCalendar()" title="Open the calendar popup">Calendar</span>
+    <span onclick="window.location.href='chartOfAccounts.html'" title="Open the Chart of Accounts module">Chart of Accounts</span>
+    <span onclick="window.location.href='journalizing.html'" title="Open the Journalizing module">Journalizing</span>
+    <span onclick="window.location.href='ledger.html'" title="Open the Ledger module">Ledger</span>
+    <span onclick="openHelp()" title="Open help information for the software">Help</span>
+  </div>
+
+  <div class="user-area">
+    <span>Username: AdminUser</span>
+    <a href="profile.html" title="Open your user profile">
+      <img src="assets/userAdmin.png" alt="User Profile" width="40" height="40">
+    </a>
+    <a href="login.html" title="Log out of the system">Logout</a>
+  </div>
+</header>
+
+<main>
+  <h1>Approve / Reject Request</h1>
+
+  <form id="approveRejectForm" action="notificationSent.html" method="get">
+    <label>User ID</label><br>
+    <input type="text" id="displayUid" disabled title="Displays the selected user's ID"><br><br>
+
+    <label>First Name</label><br>
+    <input type="text" id="displayFirst" disabled title="Displays the selected user's first name"><br><br>
+
+    <label>Last Name</label><br>
+    <input type="text" id="displayLast" disabled title="Displays the selected user's last name"><br><br>
+
+    <label>Email Address</label><br>
+    <input type="email" id="displayEmail" disabled title="Displays the selected user's email address"><br><br>
+
+    <label for="decision">Decision</label><br>
+    <select id="decision" required title="Choose whether to approve or reject this access request">
+      <option value="">Select</option>
+      <option value="approve">Approve</option>
+      <option value="reject">Reject</option>
+    </select><br><br>
+
+    <label for="message">Email Message</label><br>
+    <textarea id="message" name="message" rows="6" required title="Enter the message to send to the user about this decision"></textarea><br><br>
+
+    <button type="submit" title="Submit this approval or rejection decision">Submit</button>
+    <a href="accessRequests.html" title="Cancel and return to the pending approvals page">Cancel</a>
+  </form>
+</main>
+
+<script type="module">
+  import { db } from './firebase-config.js';
+  import { doc, getDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const userToReview = urlParams.get('uid');
+
+  if (userToReview) {
+    const userRef = doc(db, "users", userToReview);
+    const userSnap = await getDoc(userRef);
+
+    if (userSnap.exists()) {
+      const data = userSnap.data();
+      document.getElementById('displayUid').value = userToReview;
+      document.getElementById('displayFirst').value = data.firstName;
+      document.getElementById('displayLast').value = data.lastName;
+      document.getElementById('displayEmail').value = data.email;
+    }
+  }
+
+  document.getElementById('approveRejectForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const decision = document.getElementById('decision').value;
+    const userRef = doc(db, "users", userToReview);
+
+    try {
+      const userEmail = document.getElementById('displayEmail').value;
+      const adminMessage = document.getElementById('message').value;
+
+      if (decision === 'approve') {
+        await updateDoc(userRef, {
+          approved: true,
+          status: 'approved'
+        });
+
+        //triggers acception email
+        sendEmail({
+          recipient: userEmail,
+          subject: "Your Account has been Approved!",
+          message: adminMessage
+        });
+
+        alert("User approved and notification sent!");
+      } else {
+        await updateDoc(userRef, {
+          approved: false,
+          status: 'rejected'
+        });
+
+        //rejection email
+        sendEmail({
+          recipient: userEmail,
+          subject: "Account Request Status",
+          message: "Your request for access has been rejected. Message: " + adminMessage
+        });
+
+        alert("User rejected and notification sent.");
+      }
+
+      window.location.href = "accessRequests.html";
+    } catch (error) {
+      alert("Error: " + error.message);
+    }
+  });
+</script>
+
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+<script type="text/javascript">
+  (function() {
+    emailjs.init("cC6e6ZNLke2V3BRfU");
+  })();
+
+  const sendEmail = (emailData) => {
+    emailjs.send("service_nnjzk4j", "template_r50wjct", {
+      recipientEmail: emailData.recipient,
+      subject: emailData.subject,
+      message: emailData.message
+    }).then(() => {
+      alert("Email sent successfully!");
+    }, (error) => {
+      alert("Failed to send email: " + JSON.stringify(error));
+    });
+  };
+</script>
+
+</body>
+</html>

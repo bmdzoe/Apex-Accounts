@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Finance Application - Register</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="auth-page">
+  <div class="login-card">
+    <div class="logo-area">
+      <img src="assets/logo.png" alt="Logo" width="120" title="Apex Accounts logo">
+      <div class="logo-name">Apex Accounts</div>
+    </div>
+
+    <div class="login-header">
+      <h2>Create Account</h2>
+      <p>Fill in the details to create your account</p>
+    </div>
+
+    <form id="registerForm">
+      <div class="form-row" style="display: flex; gap: 1rem;">
+        <div class="form-group" style="flex: 1;">
+          <label>First Name</label>
+          <input type="text" id="first" placeholder="Jane" required title="Enter your first name">
+        </div>
+        <div class="form-group" style="flex: 1;">
+          <label>Last Name</label>
+          <input type="text" id="last" placeholder="Smith" required title="Enter your last name">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" id="email" placeholder="jane@company.com" required title="Enter your email address">
+      </div>
+
+      <div class="form-group">
+        <label>Date of Birth</label>
+        <input type="date" id="dob" required title="Select your date of birth">
+      </div>
+
+      <div class="form-group">
+        <label>Phone Number</label>
+        <input type="tel" id="phone" placeholder="+1 555 000 0000" required title="Enter your phone number">
+      </div>
+
+      <div class="form-group">
+        <label>Address</label>
+        <textarea id="address" placeholder="Street address, City, State, ZIP" style="min-height:70px" required title="Enter your mailing address"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Security Question</label>
+        <select id="secQ" required title="Select a security question for password recovery">
+          <option value="">Select a question</option>
+          <option value="maiden">What is your mother's maiden name?</option>
+          <option value="pet">What was the name of your first pet?</option>
+          <option value="city">What city were you born in?</option>
+          <option value="school">What is the name of your elementary school?</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Security Answer</label>
+        <input type="text" id="secA" placeholder="Your answer" required title="Enter the answer to your selected security question">
+      </div>
+
+      <div class="form-group">
+        <label>Password</label>
+        <input
+          type="password"
+          id="regPw"
+          placeholder="Create a password"
+          minlength="8"
+          pattern="^(?=[A-Za-z])(?=.*[A-Za-z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).{8,}$"
+          title="Must start with a letter, include a letter, a number, and a special character, minimum 8 characters."
+          required
+        >
+      </div>
+
+      <div class="form-group">
+        <label>Confirm Password</label>
+        <input type="password" id="confPw" placeholder="Confirm your password" required title="Re-enter your password to confirm it">
+      </div>
+
+      <div id="registerError" style="display:none; color:red; margin-bottom:10px;"></div>
+
+      <button type="submit" class="auth-button" style="margin-top: 20px; width: 100%; padding: 12px; background: #000; color: #fff; border: none; border-radius: 4px; cursor: pointer;" title="Submit your account request for administrator review">
+        Submit
+      </button>
+
+      <p style="text-align: center; margin-top: 15px;">
+        <a href="login.html" style="color: #666; text-decoration: none;" title="Cancel account creation and return to the login page">Cancel</a>
+      </p>
+    </form>
+  </div>
+<script type="module">
+  import { auth, db } from './firebase-config.js';
+  import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  import { doc, setDoc, serverTimestamp, Timestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+  const registerForm = document.getElementById('registerForm');
+  const errorDiv     = document.getElementById('registerError');
+  registerForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errorDiv.style.display = 'none';
+    const first   = document.getElementById('first').value.trim();
+    const last    = document.getElementById('last').value.trim();
+    const email   = document.getElementById('email').value.trim();
+    const pw      = document.getElementById('regPw').value;
+    const confPw  = document.getElementById('confPw').value;
+    if (pw !== confPw) {
+      errorDiv.textContent = "Passwords do not match.";
+      errorDiv.style.display = 'block';
+      return;
+    }
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, pw);
+      const user = userCredential.user;
+      const now      = new Date();
+      const mm       = String(now.getMonth() + 1).padStart(2, '0');
+      const yy       = String(now.getFullYear()).slice(-2);
+      const username = (first[0] + last + mm + yy).toLowerCase();
+      await setDoc(doc(db, "users", user.uid), {
+        username,
+        firstName:        first,
+        lastName:         last,
+        email,
+        dob:              document.getElementById('dob').value,
+        phone:            document.getElementById('phone').value,
+        address:          document.getElementById('address').value,
+        securityQuestion: document.getElementById('secQ').value,
+        securityAnswer:   document.getElementById('secA').value,
+        approved:         false,
+        status:           "pending",
+        loginAttempts:    0,
+        role:             "accountant",
+        createdAt:        serverTimestamp(),
+        passwordExpiry:   Timestamp.fromDate(new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)),
+        passwordHistory:  []
+      });
+      window.location.href = "pendingApproval.html";
+    } catch(error) {
+      errorDiv.textContent = "Registration Failed: " + error.message;
+      errorDiv.style.display = 'block';
+    }
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Security Questions</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <img src="assets/logo.png" alt="Logo" width="120" title="Apex Accounts logo">
+</header>
+
+<main>
+  <h1>Security Questions</h1>
+  <p>Please answer your security questions to continue.</p>
+
+  <form id="securityForm">
+    <label>Security Question</label><br>
+    <input type="text" id="q1" value="What is the name of your first pet?" disabled title="Your security question for password recovery"><br><br>
+
+    <label for="a1">Answer</label><br>
+    <input type="text" id="a1" name="a1" required title="Enter the answer to your security question"><br><br>
+
+    <button type="submit" title="Verify your answer and continue to password reset">Verify</button>
+    <a href="resetPassword.html" title="Cancel security question verification">Cancel</a>
+  </form>
+</main>
+
+<script type="module">
+  import { auth, db } from './firebase-config.js';
+  import {doc, getDoc} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+  const security = document.getElementById("securityForm");
+  const id = sessionStorage.getItem("resetId");
+  const email = sessionStorage.getItem("resetEmail");
+
+  if(!email || !id){ // if user tries to manually enter this page, redirect to proper page
+    window.location.href = "forgotPassword.html";
+  } else {
+    security.addEventListener('submit', async(e) => {
+      e.preventDefault();
+    
+      const answer = document.getElementById("a1").value;
+      try {
+        const userSnap = await getDoc(doc(db, "users", id));
+
+        if(userSnap.exists()) {
+          const userData = userSnap.data();
+          document.getElementById("q1").value = userData.securityQuestion; // change security question to user question
+
+          if (answer === userData.securityAnswer) {
+            window.location.href = "resetPassword.html";
+          } else {
+            alert("This answer is not correct. Please try again.");
+          }
+        } else {
+          alert("Could not properly retrieve user data.");
+        }
+      } catch (error) {
+        alert("An error occurred: " + error);
+      }
+    });
+  }
+</script>
+
+</body>
+</html>

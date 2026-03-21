@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Create User</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+
+  <script>
+    function openCalendar() {
+      window.open(
+        "calendar.html",
+        "CalendarPopup",
+        "width=500,height=550,left=100,top=100,resizable=yes,scrollbars=no"
+      );
+    }
+
+    function openHelp() {
+      window.open(
+        "help.html",
+        "HelpPopup",
+        "width=700,height=600,left=120,top=80,resizable=yes,scrollbars=yes"
+      );
+    }
+  </script>
+</head>
+<body>
+
+<header class="header-bar">
+  <img src="assets/logo.png" alt="Logo" width="120" title="Apex Accounts logo">
+
+  <div class="top-services">
+    <span onclick="openCalendar()" title="Open the calendar popup">Calendar</span>
+    <span onclick="window.location.href='chartOfAccounts.html'" title="Open the Chart of Accounts module">Chart of Accounts</span>
+    <span onclick="window.location.href='journalizing.html'" title="Open the Journalizing module">Journalizing</span>
+    <span onclick="window.location.href='ledger.html'" title="Open the Ledger module">Ledger</span>
+    <span onclick="openHelp()" title="Open help information for the software">Help</span>
+  </div>
+
+  <div class="user-area">
+    <span id="headerUsername">Username: AdminUser</span>
+    <a href="profile.html" title="Open your user profile">
+      <img src="assets/userAdmin.png" alt="User Profile" width="40" height="40">
+    </a>
+    <a href="login.html" title="Log out of the system">Logout</a>
+  </div>
+</header>
+
+<main>
+  <h1>Create User</h1>
+
+  <form id="createUserForm">
+    <label for="firstname">First Name</label><br>
+    <input type="text" id="firstname" required title="Enter the user's first name"><br><br>
+
+    <label for="lastname">Last Name</label><br>
+    <input type="text" id="lastname" required title="Enter the user's last name"><br><br>
+
+    <label for="email">Email Address</label><br>
+    <input type="email" id="email" required title="Enter the user's email address"><br><br>
+
+    <label for="role">Role</label><br>
+    <select id="role" required title="Select the role to assign to this user">
+      <option value="">Select a role</option>
+      <option value="administrator">Administrator</option>
+      <option value="manager">Manager</option>
+      <option value="accountant">Accountant</option>
+    </select><br><br>
+
+    <label for="status">Status</label><br>
+    <select id="status" required title="Select whether this account is active or inactive">
+      <option value="approved">Active</option>
+      <option value="inactive">Inactive</option>
+    </select><br><br>
+
+    <label for="password">Temporary Password</label><br>
+    <input type="password" id="password" minlength="8"
+      pattern="^(?=[A-Za-z])(?=.*[A-Za-z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).{8,}$"
+      title="Enter a temporary password that starts with a letter and includes a letter, number, and special character"
+      required><br><br>
+
+    <p id="createError" style="color:red; display:none;"></p>
+
+    <button type="submit" title="Create the user account with the entered information">Create User</button>
+    <a href="adminDashboard.html" title="Cancel and return to the administrator dashboard">Cancel</a>
+  </form>
+</main>
+
+<script type="module">
+  import { auth, db } from './firebase-config.js';
+  import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  import { doc, setDoc, serverTimestamp, Timestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+  const username = localStorage.getItem('username');
+  if (username) document.getElementById('headerUsername').textContent = 'Username: ' + username;
+
+  document.getElementById('createUserForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const errorEl = document.getElementById('createError');
+    errorEl.style.display = 'none';
+
+    const first = document.getElementById('firstname').value.trim();
+    const last = document.getElementById('lastname').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const role = document.getElementById('role').value;
+    const status = document.getElementById('status').value;
+    const password = document.getElementById('password').value;
+
+    try {
+      // Create Firebase Auth account
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // Auto-generate username
+      const now = new Date();
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const yy = String(now.getFullYear()).slice(-2);
+      const username = (first[0] + last + mm + yy).toLowerCase();
+
+      // Save to Firestore
+      await setDoc(doc(db, "users", user.uid), {
+        username,
+        firstName: first,
+        lastName: last,
+        email,
+        role,
+        status,
+        approved: status === 'approved',
+        loginAttempts: 0,
+        createdAt: serverTimestamp(),
+        passwordExpiry: Timestamp.fromDate(new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)),
+        passwordHistory: []
+      });
+
+      window.location.href = 'userCreatedConfirmation.html';
+
+    } catch (err) {
+      errorEl.textContent = 'Failed to create user: ' + err.message;
+      errorEl.style.display = 'block';
+    }
+  });
+</script>
+
+</body>
+</html>

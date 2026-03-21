@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Welcome</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <img src="assets/logo.png" alt="Logo" width="120">
+</header>
+<main>
+  <h1>Welcome</h1>
+  <p>A secure, centralized platform for managing your organization's financial accounts and users.</p>
+  <p>Please log in to access your dashboard. New users must request access and await administrator approval before signing in.</p>
+  <form>
+    <button type="button" onclick="window.location.href='login.html'">Login</button>
+    <button type="button" onclick="window.location.href='register.html'">Request Access</button>
+    <button type="button" onclick="window.location.href='adminDashboard.html'" id="adminConsoleBtn" style="display:none;">Admin Console</button>
+  </form>
+</main>
+<script>
+  // Show the Admin Console button only if the user's role in session is admin.
+  // This value would be set by the backend after login (e.g. via a session cookie or localStorage).
+  // Example: after login, backend sets localStorage.setItem('role', 'administrator');
+  const role = localStorage.getItem('role');
+  if (role === 'administrator') {
+    document.getElementById('adminConsoleBtn').style.display = 'inline-block';
+  }
+</script>
+</body>
+</html>

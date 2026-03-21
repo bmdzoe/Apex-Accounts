@@ -1,0 +1,109 @@
+<!-- activateDeactivateUser.html -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Activate/Deactivate User</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+
+  <script>
+    function openCalendar() {
+      window.open(
+        "calendar.html",
+        "CalendarPopup",
+        "width=500,height=550,left=100,top=100,resizable=yes,scrollbars=no"
+      );
+    }
+
+    function openHelp() {
+      window.open(
+        "help.html",
+        "HelpPopup",
+        "width=700,height=600,left=120,top=80,resizable=yes,scrollbars=yes"
+      );
+    }
+  </script>
+</head>
+<body>
+
+<header class="header-bar">
+  <img src="assets/logo.png" alt="Logo" width="120" title="Apex Accounts logo">
+
+  <div class="top-services">
+    <span onclick="openCalendar()" title="Open the calendar popup">Calendar</span>
+    <span onclick="window.location.href='chartOfAccounts.html'" title="Open the Chart of Accounts module">Chart of Accounts</span>
+    <span onclick="window.location.href='journalizing.html'" title="Open the Journalizing module">Journalizing</span>
+    <span onclick="window.location.href='ledger.html'" title="Open the Ledger module">Ledger</span>
+    <span onclick="openHelp()" title="Open help information for the software">Help</span>
+  </div>
+
+  <div class="user-area">
+    <span>Username: AdminUser</span>
+    <a href="profile.html" title="Open your user profile">
+      <img src="assets/userAdmin.png" alt="User Profile" width="40" height="40">
+    </a>
+    <a href="login.html" title="Log out of the system">Logout</a>
+  </div>
+</header>
+
+<main>
+  <h1>Activate/Deactivate User</h1>
+
+  <form action="activateDeactivateConfirmation.html" method="get">
+    <label for="userid">User ID</label><br>
+    <input type="text" id="userid" name="userid" required title="Enter the user ID for the account you want to activate or deactivate"><br><br>
+
+    <label for="status">Set Status</label><br>
+    <select id="status" name="status" required title="Choose whether to activate or deactivate this user account">
+      <option value="active">Active</option>
+      <option value="inactive">Inactive</option>
+    </select><br><br>
+
+    <button type="submit" title="Save the selected user status">Save</button>
+    <a href="adminDashboard.html" title="Cancel and return to the administrator dashboard">Cancel</a>
+  </form>
+</main>
+
+<script type="module">
+  import { db } from './firebase-config.js';
+  import { doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+  const statusForm = document.querySelector('form');
+
+  statusForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const uid = document.getElementById('userid').value.trim();
+    const newStatus = document.getElementById('status').value;
+    const userRef = doc(db, "users", uid);
+
+    try {
+      const userSnap = await getDoc(userRef);
+
+      if (!userSnap.exists()) {
+        alert("Error: User ID not found in database.");
+        return;
+      }
+
+      const selection = document.getElementById('status').value; // active or inactive
+      const finalStatus = (selection === 'active') ? 'approved' : 'suspended';
+      const finalApproved = (selection === 'active');
+
+      await updateDoc(userRef, {
+        status: finalStatus,
+        approved: finalApproved
+      });
+
+      alert(`User status successfully updated to: ${finalStatus.toUpperCase()}`);
+      window.location.href = "activateDeactivateConfirmation.html";
+
+    } catch (error) {
+      alert("Failed to update user: " + error.message);
+    }
+  });
+</script>
+
+</body>
+</html>

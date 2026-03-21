@@ -1,0 +1,137 @@
+<!-- profile.html -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>User Profile</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+
+  <script>
+    function openCalendar() {
+      window.open(
+        "calendar.html",
+        "CalendarPopup",
+        "width=500,height=550,left=100,top=100,resizable=yes,scrollbars=no"
+      );
+    }
+
+    function openHelp() {
+      window.open(
+        "help.html",
+        "HelpPopup",
+        "width=700,height=600,left=120,top=80,resizable=yes,scrollbars=yes"
+      );
+    }
+  </script>
+</head>
+
+<body>
+
+<header class="header-bar">
+  <img src="assets/logo.png" alt="Logo" width="120" title="Apex Accounts logo">
+
+  <div class="top-services">
+    <span onclick="openCalendar()" title="Open the calendar popup">Calendar</span>
+    <span onclick="window.location.href='chartOfAccounts.html'" title="Open the Chart of Accounts module">Chart of Accounts</span>
+    <span onclick="window.location.href='journalizing.html'" title="Open the Journalizing module">Journalizing</span>
+    <span onclick="window.location.href='ledger.html'" title="Open the Ledger module">Ledger</span>
+    <span onclick="openHelp()" title="Open help information for the software">Help</span>
+  </div>
+
+  <div class="user-area">
+    <span title="Displays the current logged in username">Username: AdminUser</span>
+    <a href="profile.html" title="Open your user profile">
+      <img src="assets/userAdmin.png" width="40" alt="User Profile">
+    </a>
+    <a href="login.html" title="Log out of the system">Logout</a>
+  </div>
+</header>
+
+<main>
+  <h1>User Profile</h1>
+
+  <form id="profileForm">
+
+    <label>User ID</label><br>
+    <input type="text" id="userId" disabled title="Displays your system user ID"><br><br>
+
+    <label>First Name</label><br>
+    <input type="text" id="firstName" title="Enter or update your first name"><br><br>
+
+    <label>Last Name</label><br>
+    <input type="text" id="lastName" title="Enter or update your last name"><br><br>
+
+    <label>Email Address</label><br>
+    <input type="email" id="email" disabled title="Displays your email address"><br><br>
+
+    <label>Address</label><br>
+    <input type="text" id="address" title="Enter or update your mailing address"><br><br>
+
+    <label>Date of Birth</label><br>
+    <input type="date" id="dob" title="Select or update your date of birth"><br><br>
+
+    <button type="submit" title="Save the changes made to your profile">Save Changes</button>
+    <a href="accountantDashboard.html" title="Cancel changes and return to the accountant dashboard">Cancel</a>
+
+  </form>
+</main>
+
+<script type="module">
+  import { auth, db } from './firebase-config.js';
+  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  import { doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+  const profileForm = document.getElementById('profileForm');
+  let currentUserUid = null;
+
+  // loading user data
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      currentUserUid = user.uid;
+      const docRef = doc(db, "users", user.uid);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const userData = docSnap.data();
+        
+        // getting database info
+        document.getElementById('userId').value = user.uid;
+        document.getElementById('email').value = user.email;
+        document.getElementById('firstName').value = userData.firstName || "";
+        document.getElementById('lastName').value = userData.lastName || "";
+        document.getElementById('address').value = userData.address || "";
+        document.getElementById('dob').value = userData.dob || "";
+      }
+    } else {
+      window.location.href = "login.html";
+    }
+  });
+
+  // new data will be saved on submit
+  profileForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    if (currentUserUid) {
+      try {
+        const docRef = doc(db, "users", currentUserUid);
+
+        await updateDoc(docRef, {
+          firstName: document.getElementById('firstName').value,
+          lastName: document.getElementById('lastName').value,
+          address: document.getElementById('address').value,
+          dob: document.getElementById('dob').value
+        });
+
+        alert("Profile updated successfully!");
+      } catch (error) {
+        console.error("Error updating profile: ", error);
+        alert("Failed to save changes.");
+      }
+    }
+  });
+</script>
+
+</body>
+</html>

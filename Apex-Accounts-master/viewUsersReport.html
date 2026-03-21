@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>User Reports</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+
+  <script>
+    function openCalendar() {
+      window.open(
+        "calendar.html",
+        "CalendarPopup",
+        "width=500,height=550,left=100,top=100,resizable=yes,scrollbars=no"
+      );
+    }
+
+    function openHelp() {
+      window.open(
+        "help.html",
+        "HelpPopup",
+        "width=700,height=600,left=120,top=80,resizable=yes,scrollbars=yes"
+      );
+    }
+  </script>
+</head>
+<body>
+
+<header class="header-bar">
+  <img src="assets/logo.png" alt="Logo" width="120" title="Apex Accounts logo">
+
+  <div class="top-services">
+    <span onclick="openCalendar()" title="Open the calendar popup">Calendar</span>
+    <span onclick="window.location.href='chartOfAccounts.html'" title="Open the Chart of Accounts module">Chart of Accounts</span>
+    <span onclick="window.location.href='journalizing.html'" title="Open the Journalizing module">Journalizing</span>
+    <span onclick="window.location.href='ledger.html'" title="Open the Ledger module">Ledger</span>
+    <span onclick="openHelp()" title="Open help information for the software">Help</span>
+  </div>
+
+  <div class="user-area">
+    <span id="headerUsername">Username: AdminUser</span>
+    <a href="profile.html" title="Open your user profile">
+      <img src="assets/userAdmin.png" alt="User Profile" width="40" height="40">
+    </a>
+    <a href="login.html" onclick="localStorage.clear()" title="Log out of the system">Logout</a>
+  </div>
+</header>
+
+<main>
+  <h1>All Users Report</h1>
+  <p id="loadingMsg">Loading users...</p>
+  <p id="emptyMsg" style="display:none;">No users found.</p>
+
+  <table border="1" cellpadding="8" cellspacing="0" id="usersTable" style="display:none;" title="Displays all users currently stored in the system">
+    <thead>
+      <tr>
+        <th title="System-generated user identifier">User ID</th>
+        <th title="Username assigned to the account">Username</th>
+        <th title="Full name of the user">Name</th>
+        <th title="Email address associated with the user">Email</th>
+        <th title="User role in the system">Role</th>
+        <th title="Current account status">Status</th>
+      </tr>
+    </thead>
+    <tbody id="usersBody"></tbody>
+  </table>
+
+  <br>
+  <a href="adminDashboard.html" title="Return to the administrator dashboard">Back</a>
+</main>
+
+<script type="module">
+  import { db } from './firebase-config.js';
+  import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+  const username = localStorage.getItem('username');
+  if (username) document.getElementById('headerUsername').textContent = 'Username: ' + username;
+
+  async function loadUsers() {
+    const tbody = document.getElementById('usersBody');
+
+    try {
+      const snapshot = await getDocs(collection(db, "users"));
+      document.getElementById('loadingMsg').style.display = 'none';
+
+      if (snapshot.empty) {
+        document.getElementById('emptyMsg').style.display = 'block';
+        return;
+      }
+
+      snapshot.forEach((docSnap) => {
+        const u = docSnap.data();
+        const row = `
+          <tr>
+            <td title="System-generated user identifier">${docSnap.id.substring(0, 8)}...</td>
+            <td title="Username assigned to the account">${u.username || 'N/A'}</td>
+            <td title="Full name of the user">${u.firstName} ${u.lastName}</td>
+            <td title="Email address associated with the user">${u.email}</td>
+            <td title="User role in the system">${u.role}</td>
+            <td title="Current account status">${u.status}</td>
+          </tr>
+        `;
+        tbody.innerHTML += row;
+      });
+
+      document.getElementById('usersTable').style.display = 'table';
+    } catch (err) {
+      document.getElementById('loadingMsg').textContent = 'Failed to load users.';
+    }
+  }
+
+  loadUsers();
+</script>
+
+</body>
+</html>
