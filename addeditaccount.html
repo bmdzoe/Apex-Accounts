@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Add / Edit Account – Apex Accounts</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <img src="assets/logo.png" alt="Apex Accounts Logo" width="120">
+  <div>
+    <span id="headerUsername">Username: </span>
+    <a href="profile.html" title="View your profile page">
+      <img id="userAvatar" src="assets/userAccountant.png" alt="User Profile" width="40" height="40">
+    </a>
+    <a href="login.html" onclick="localStorage.clear()" title="Log out of Apex Accounts">Logout</a>
+  </div>
+</header>
+<main>
+  <h1 id="pageTitle">Add New Account</h1>
+  <p id="pageSubtitle">Complete all required fields marked with * to create a new ledger account.</p>
+  <p id="formError" style="color:red; display:none;"></p>
+  <p id="formSuccess" style="color:green; display:none;"></p>
+  <p id="deactivateWarn" style="color:orange; display:none;">
+    ⚠ Cannot deactivate: This account has a balance greater than zero. Reduce the balance to zero before deactivating.
+  </p>
+  <form id="accountForm" novalidate>
+    
+    <fieldset>
+      <legend>1 · Identification</legend>
+      <label for="accountName">Account Name *</label><br>
+      <input type="text" id="accountName" placeholder="e.g. Cash and Cash Equivalents"
+        title="A unique, descriptive name for this account. No two accounts may share the same name (Spec #2)." required><br>
+      <small id="e-name" style="color:red; display:none;"></small><br><br>
+      <label for="accountNumber">Account Number *</label><br>
+      <input type="text" id="accountNumber" placeholder="e.g. 1010" maxlength="10" inputmode="numeric"
+        title="Numeric digits only — no letters or decimal points (Spec #5). Must begin with the correct leading digit: 1=Asset, 2=Liability, 3=Equity, 4=Revenue, 5=Expense. Must be unique (Spec #2)." required><br>
+      <small>Digits only · 1=Asset, 2=Liability, 3=Equity, 4=Revenue, 5=Expense</small><br>
+      <small id="e-number" style="color:red; display:none;"></small><br><br>
+      <label for="accountDescription">Account Description *</label><br>
+      <textarea id="accountDescription" rows="3" cols="50"
+        placeholder="Describe the purpose and scope of this account…"
+        title="A clear description of what transactions this account records." required></textarea><br>
+      <small id="e-description" style="color:red; display:none;"></small><br><br>
+      <label for="orderNum">Order</label><br>
+      <input type="number" id="orderNum" placeholder="e.g. 1" min="1"
+        title="Display sort order within its category (e.g. Cash = 01). Used to sort accounts on reports."><br>
+      <small>Display sort order within category</small><br><br>
+      <label for="statement">Financial Statement</label><br>
+      <select id="statement" title="Which financial statement this account appears on: BS = Balance Sheet, IS = Income Statement, RE = Retained Earnings Statement.">
+        <option value="">— Select statement —</option>
+        <option value="BS">BS — Balance Sheet</option>
+        <option value="IS">IS — Income Statement</option>
+        <option value="RE">RE — Retained Earnings Statement</option>
+      </select><br><br>
+      <label for="comment">Comment</label><br>
+      <textarea id="comment" rows="2" cols="50"
+        placeholder="Optional internal notes or comments…"
+        title="Any additional internal notes about this account. This field is optional."></textarea><br><br>
+    </fieldset>
+    
+    <fieldset>
+      <legend>2 · Classification</legend>
+      <label for="accountCategory">Account Category *</label><br>
+      <select id="accountCategory" required onchange="onCategoryChange()"
+        title="The main classification of this account (Asset, Liability, Equity, Revenue, or Expense). Determines the Normal Side and constrains the valid account number range.">
+        <option value="">— Select category —</option>
+        <option value="Asset">Asset</option>
+        <option value="Liability">Liability</option>
+        <option value="Equity">Equity</option>
+        <option value="Revenue">Revenue</option>
+        <option value="Expense">Expense</option>
+      </select><br>
+      <small id="e-category" style="color:red; display:none;"></small><br><br>
+      <label for="accountSubcategory">Account Subcategory</label><br>
+      <select id="accountSubcategory"
+        title="A more specific classification within the main category (e.g. Current Assets). Options update based on the selected category.">
+        <option value="">— Select subcategory —</option>
+      </select><br><br>
+      <label for="normalSide">Normal Side</label><br>
+      <input type="text" id="normalSide" readonly placeholder="Auto-filled by category"
+        title="The normal balance side (Debit or Credit) is automatically determined by the account category and cannot be edited manually."><br>
+      <small>Auto-set from category</small><br><br>
+      <label for="parentAccount">Parent Account</label><br>
+      <select id="parentAccount"
+        title="Optionally nest this account under a parent account to create a hierarchy in the Chart of Accounts.">
+        <option value="">— No parent (top-level) —</option>
+      </select><br><br>
+    </fieldset>
+   
+    <fieldset>
+      <legend>3 · Financial Values — 2 decimal places with commas (Spec #3 &amp; #4)</legend>
+      <label for="currency">Currency *</label><br>
+      <select id="currency" required
+        title="The currency for all monetary values on this account.">
+        <option value="USD">USD — US Dollar</option>
+        <option value="EUR">EUR — Euro</option>
+        <option value="GBP">GBP — British Pound</option>
+        <option value="CAD">CAD — Canadian Dollar</option>
+        <option value="AUD">AUD — Australian Dollar</option>
+        <option value="JPY">JPY — Japanese Yen</option>
+      </select><br><br>
+      <label for="initialBalance">Initial Balance</label><br>
+      <input type="number" id="initialBalance" placeholder="0.00" step="0.01" value="0" min="0"
+        title="The opening balance of this account at creation time. Stored and displayed with exactly 2 decimal places and comma separators (Spec #3, #4)."
+        oninput="recalcBalance()"><br>
+      <small>Opening balance — 2 decimal places, commas applied on save</small><br><br>
+      <label for="debit">Debit</label><br>
+      <input type="number" id="debit" placeholder="0.00" step="0.01" value="0" min="0"
+        title="The total debit amount. Must use exactly 2 decimal places with comma separators (Spec #3, #4)."
+        oninput="recalcBalance()"><br><br>
+      <label for="credit">Credit</label><br>
+      <input type="number" id="credit" placeholder="0.00" step="0.01" value="0" min="0"
+        title="The total credit amount. Must use exactly 2 decimal places with comma separators (Spec #3, #4)."
+        oninput="recalcBalance()"><br><br>
+      <label for="balance">Balance (computed)</label><br>
+      <input type="text" id="balance" readonly placeholder="0.00"
+        title="Auto-computed: Initial Balance + Debit − Credit. Read-only. Displayed with 2 decimal places and comma formatting (Spec #3, #4)."><br>
+      <small>Read-only · auto-computed: Initial + Debit − Credit</small><br>
+      <small id="balanceNote" style="color:red;"></small><br><br>
+    </fieldset>
+    <fieldset>
+      <legend>4 · Settings</legend>
+      <label>
+        <input type="checkbox" id="isActive" checked onchange="onActiveToggle()"
+          title="Activate or deactivate this account. Per Spec #6, accounts with a balance greater than zero cannot be deactivated.">
+        Active Account
+      </label><br>
+      <small>Inactive accounts are hidden from transaction entry but kept for reporting. Accounts with balance &gt; 0 cannot be deactivated (Spec #6).</small><br><br>
+      <label>
+        <input type="checkbox" id="isReconcilable"
+          title="Mark this account as reconcilable to allow bank statement reconciliation against it.">
+        Reconcilable
+      </label><br>
+      <small>Allow this account to be reconciled against bank statements</small><br><br>
+    </fieldset>
+    <br>
+    <button type="submit" id="submitBtn"
+      title="Validate all fields and save this account to the database">
+      Save Account
+    </button>
+    <button type="button" onclick="resetForm()"
+      title="Clear all form fields and start over. Unsaved changes will be lost.">
+      Reset
+    </button>
+    <a href="chartOfAccounts.html"
+      title="Discard all changes and return to the Chart of Accounts">
+      Cancel
+    </a>
+  </form>
+</main>
+<script type="module">
+  import { auth, db } from './firebase-config.js';
+  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  import {
+    collection, getDocs, doc, getDoc, addDoc, updateDoc, serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+  const subcategoryMap = {
+    Asset:     ['Current Assets', 'Non-Current Assets', 'Fixed Assets', 'Intangible Assets', 'Investments'],
+    Liability: ['Current Liabilities', 'Non-Current Liabilities', 'Long-Term Debt', 'Contingent Liabilities'],
+    Equity:    ['Common Stock', 'Retained Earnings', 'Additional Paid-In Capital', 'Reserves'],
+    Revenue:   ['Operating Revenue', 'Non-Operating Revenue', 'Other Income'],
+    Expense:   ['Cost of Goods Sold', 'Operating Expenses', 'Administrative Expenses', 'Non-Operating Expenses'],
+  };
+  const categoryStartDigit = { Asset:'1', Liability:'2', Equity:'3', Revenue:'4', Expense:'5' };
+  const normalSideMap      = { Asset:'Debit', Expense:'Debit', Liability:'Credit', Equity:'Credit', Revenue:'Credit' };
+  let editingId     = null;
+  let allAccounts   = [];
+  let currentUserId = null;
+  
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) { window.location.href = 'login.html'; return; }
+    currentUserId = user.uid;
+    const snap = await getDoc(doc(db, 'users', user.uid));
+    if (!snap.exists()) { window.location.href = 'login.html'; return; }
+    const ud = snap.data();
+    document.getElementById('headerUsername').textContent = 'Username: ' + (ud.username || '');
+    const av = document.getElementById('userAvatar');
+    if (ud.role === 'administrator') av.src = 'assets/userAdmin.png';
+    else if (ud.role === 'manager')  av.src = 'assets/userManager.png';
+    await loadAccountsForDropdown();
+    await maybeLoadEditData();
+    recalcBalance();
+  });
+  
+  async function loadAccountsForDropdown() {
+    const snap = await getDocs(collection(db, 'accounts'));
+    allAccounts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const sel = document.getElementById('parentAccount');
+    allAccounts
+      .sort((a, b) => (a.accountNumber || '').localeCompare(b.accountNumber || ''))
+      .forEach(a => {
+        const opt = document.createElement('option');
+        opt.value = a.id;
+        opt.textContent = `${a.accountNumber} — ${a.accountName}`;
+        sel.appendChild(opt);
+      });
+  }
+  
+  async function maybeLoadEditData() {
+    editingId = sessionStorage.getItem('editAccountId');
+    if (!editingId) return;
+    sessionStorage.removeItem('editAccountId');
+    document.getElementById('pageTitle').textContent    = 'Edit Account';
+    document.getElementById('pageSubtitle').textContent = 'Modify the fields below and click Update Account to save changes.';
+    document.getElementById('submitBtn').textContent    = 'Update Account';
+    const snap = await getDoc(doc(db, 'accounts', editingId));
+    if (!snap.exists()) { alert('Account not found.'); window.location.href = 'chartOfAccounts.html'; return; }
+    const a = snap.data();
+    document.getElementById('accountName').value        = a.accountName        || '';
+    document.getElementById('accountNumber').value      = a.accountNumber      || '';
+    document.getElementById('accountDescription').value = a.accountDescription || '';
+    document.getElementById('orderNum').value           = a.orderNum           || '';
+    document.getElementById('statement').value          = a.statement          || '';
+    document.getElementById('comment').value            = a.comment            || '';
+    document.getElementById('currency').value           = a.currency           || 'USD';
+    document.getElementById('initialBalance').value     = (a.initialBalance    ?? 0).toFixed(2);
+    document.getElementById('debit').value              = (a.debit             ?? 0).toFixed(2);
+    document.getElementById('credit').value             = (a.credit            ?? 0).toFixed(2);
+    document.getElementById('isActive').checked         = a.isActive           !== false;
+    document.getElementById('isReconcilable').checked   = a.isReconcilable     === true;
+    if (a.accountCategory) {
+      document.getElementById('accountCategory').value = a.accountCategory;
+      onCategoryChange();
+      setTimeout(() => {
+        document.getElementById('accountSubcategory').value = a.accountSubcategory || '';
+      }, 20);
+    }
+    const parentSel = document.getElementById('parentAccount');
+    for (const opt of [...parentSel.options]) {
+      if (opt.value === editingId) { opt.remove(); break; }
+    }
+    parentSel.value = a.parentId || '';
+    recalcBalance();
+  }
+  
+  window.onCategoryChange = function () {
+    const cat = document.getElementById('accountCategory').value;
+    document.getElementById('normalSide').value = normalSideMap[cat] || '';
+    const sub = document.getElementById('accountSubcategory');
+    sub.innerHTML = '<option value="">— Select subcategory —</option>';
+    (subcategoryMap[cat] || []).forEach(s => {
+      const o = document.createElement('option'); o.value = s; o.textContent = s; sub.appendChild(o);
+    });
+    const numIn = document.getElementById('accountNumber');
+    if (!numIn.value && categoryStartDigit[cat]) {
+      numIn.placeholder = `e.g. ${categoryStartDigit[cat]}010`;
+    }
+  };
+  
+  window.recalcBalance = function () {
+    const init   = parseFloat(document.getElementById('initialBalance').value) || 0;
+    const debit  = parseFloat(document.getElementById('debit').value)          || 0;
+    const credit = parseFloat(document.getElementById('credit').value)         || 0;
+    const bal    = init + debit - credit;
+    document.getElementById('balance').value = formatMoney(bal);
+    document.getElementById('balanceNote').textContent = bal < 0 ? '⚠ Negative balance' : '';
+  };
+  window.onActiveToggle = function () {
+    const init   = parseFloat(document.getElementById('initialBalance').value) || 0;
+    const active = document.getElementById('isActive').checked;
+    
+    if (!active && init > 0) {
+      document.getElementById('isActive').checked = true;
+      const w = document.getElementById('deactivateWarn');
+      w.style.display = 'block';
+      setTimeout(() => { w.style.display = 'none'; }, 5000);
+    }
+  };
+  window.resetForm = function () {
+    if (!confirm('Clear all fields and start over? Unsaved changes will be lost.')) return;
+    document.getElementById('accountForm').reset();
+    document.getElementById('accountSubcategory').innerHTML = '<option value="">— Select subcategory —</option>';
+    document.getElementById('normalSide').value = '';
+    document.getElementById('balance').value    = '';
+    document.getElementById('balanceNote').textContent = '';
+    clearErrors();
+    hideMessages();
+  };
+  function formatMoney(val) {
+    return new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(val);
+  }
+ 
+  function validate() {
+    clearErrors();
+    let ok = true;
+    const name   = document.getElementById('accountName').value.trim();
+    const number = document.getElementById('accountNumber').value.trim();
+    const desc   = document.getElementById('accountDescription').value.trim();
+    const cat    = document.getElementById('accountCategory').value;
+    if (!name) {
+      showErr('e-name', 'Account name is required.'); ok = false;
+    } else if (allAccounts.find(a => a.accountName === name && a.id !== editingId)) {
+      showErr('e-name', 'An account with this name already exists (Spec #2).'); ok = false;
+    }
+    if (!number) {
+      showErr('e-number', 'Account number is required.'); ok = false;
+    } else if (!/^\d+$/.test(number)) {
+      showErr('e-number', 'Account number must contain digits only — no letters or decimals (Spec #5).'); ok = false;
+    } else if (allAccounts.find(a => a.accountNumber === number && a.id !== editingId)) {
+      showErr('e-number', 'This account number is already in use (Spec #2).'); ok = false;
+    } else if (cat && categoryStartDigit[cat] && number[0] !== categoryStartDigit[cat]) {
+      showErr('e-number', `${cat} account numbers must start with ${categoryStartDigit[cat]}.`); ok = false;
+    }
+    if (!desc) { showErr('e-description', 'Description is required.'); ok = false; }
+    if (!cat)  { showErr('e-category',    'Please select an account category.'); ok = false; }
+    return ok;
+  }
+  function showErr(id, msg) {
+    const el = document.getElementById(id);
+    el.textContent = msg; el.style.display = 'block';
+  }
+  function clearErrors() {
+    document.querySelectorAll('small[id^="e-"]').forEach(e => {
+      e.style.display = 'none'; e.textContent = '';
+    });
+  }
+  function hideMessages() {
+    document.getElementById('formError').style.display   = 'none';
+    document.getElementById('formSuccess').style.display = 'none';
+  }
+  document.getElementById('accountForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideMessages();
+    if (!validate()) {
+      const el = document.getElementById('formError');
+      el.textContent = 'Please correct the errors below before saving.';
+      el.style.display = 'block';
+      return;
+    }
+    const initBal = parseFloat(parseFloat(document.getElementById('initialBalance').value || 0).toFixed(2));
+    const debit   = parseFloat(parseFloat(document.getElementById('debit').value  || 0).toFixed(2));
+    const credit  = parseFloat(parseFloat(document.getElementById('credit').value || 0).toFixed(2));
+    const balance = parseFloat((initBal + debit - credit).toFixed(2));
+    const data = {
+      accountName:        document.getElementById('accountName').value.trim(),
+      accountNumber:      document.getElementById('accountNumber').value.trim(),
+      accountDescription: document.getElementById('accountDescription').value.trim(),
+      orderNum:           parseInt(document.getElementById('orderNum').value) || null,
+      statement:          document.getElementById('statement').value || null,
+      comment:            document.getElementById('comment').value.trim(),
+      accountCategory:    document.getElementById('accountCategory').value,
+      accountSubcategory: document.getElementById('accountSubcategory').value || null,
+      normalSide:         document.getElementById('normalSide').value || null,
+      parentId:           document.getElementById('parentAccount').value || null,
+      currency:           document.getElementById('currency').value,
+      initialBalance:     initBal,   
+      debit:              debit,
+      credit:             credit,
+      balance:            balance,
+      isActive:           document.getElementById('isActive').checked,
+      isReconcilable:     document.getElementById('isReconcilable').checked,
+      userId:             currentUserId,   
+      updatedAt:          serverTimestamp(),
+    };
+    try {
+      if (editingId) {
+        const before = allAccounts.find(a => a.id === editingId) || null;
+        await updateDoc(doc(db, 'accounts', editingId), data);
+        await addDoc(collection(db, 'eventLogs'), {
+          eventType: 'ACCOUNT_UPDATED',
+          accountId: editingId,
+          before:    before,
+          after:     { ...data },
+          userId:    currentUserId,
+          timestamp: serverTimestamp(),
+        });
+        const el = document.getElementById('formSuccess');
+        el.textContent = 'Account updated successfully! Redirecting…';
+        el.style.display = 'block';
+      } else {
+        data.createdAt = serverTimestamp();  
+        const ref = await addDoc(collection(db, 'accounts'), data);
+        await addDoc(collection(db, 'eventLogs'), {
+          eventType: 'ACCOUNT_CREATED',
+          accountId: ref.id,
+          before:    null,
+          after:     { ...data },
+          userId:    currentUserId,
+          timestamp: serverTimestamp(),
+        });
+        const el = document.getElementById('formSuccess');
+        el.textContent = 'Account created successfully! Redirecting…';
+        el.style.display = 'block';
+      }
+      setTimeout(() => { window.location.href = 'chartOfAccounts.html'; }, 1600);
+    } catch (err) {
+      const el = document.getElementById('formError');
+      el.textContent = 'Save failed: ' + err.message;
+      el.style.display = 'block';
+    }
+  });
+</script>
+</body>
+</html>
