@@ -6,11 +6,45 @@
   <title>Notification Sent</title>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+
+  <script>
+    function openCalendar() {
+      window.open(
+        "calendar.html",
+        "CalendarPopup",
+        "width=500,height=550,left=100,top=100,resizable=yes,scrollbars=no"
+      );
+    }
+
+    function openHelp() {
+      window.open(
+        "help.html",
+        "HelpPopup",
+        "width=700,height=600,left=120,top=80,resizable=yes,scrollbars=yes"
+      );
+    }
+  </script>
 </head>
 <body>
 
-<header>
-  <img src="assets/logo.png" alt="Logo" width="120">
+<header class="header-bar">
+  <img src="assets/logo.png" alt="Logo" width="120" title="Apex Accounts logo">
+
+  <div class="top-services">
+    <span onclick="openCalendar()" title="Open the calendar popup">Calendar</span>
+    <span onclick="window.location.href='chartOfAccounts.html'" title="Open the Chart of Accounts module">Chart of Accounts</span>
+    <span onclick="window.location.href='journalizing.html'" title="Open the Journalizing module">Journalizing</span>
+    <span onclick="window.location.href='ledger.html'" title="Open the Ledger module">Ledger</span>
+    <span onclick="openHelp()" title="Open help information for the software">Help</span>
+  </div>
+
+  <div class="user-area">
+    <span>Username: AdminUser</span>
+    <a href="profile.html" title="Open your user profile">
+      <img src="assets/userAdmin.png" width="40" alt="User Profile">
+    </a>
+    <a href="login.html" title="Log out of the system">Logout</a>
+  </div>
 </header>
 
 <main>
@@ -18,7 +52,7 @@
 
   <p>The user has been notified of the approval decision.</p>
 
-  <a href="adminDashboard.html">Return to Dashboard</a>
+  <a href="adminDashboard.html" title="Return to the administrator dashboard">Return to Dashboard</a>
 </main>
 
 </body>

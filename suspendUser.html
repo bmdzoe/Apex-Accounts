@@ -6,17 +6,44 @@
   <title>Suspend User</title>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+
+  <script>
+    function openCalendar() {
+      window.open(
+        "calendar.html",
+        "CalendarPopup",
+        "width=500,height=550,left=100,top=100,resizable=yes,scrollbars=no"
+      );
+    }
+
+    function openHelp() {
+      window.open(
+        "help.html",
+        "HelpPopup",
+        "width=700,height=600,left=120,top=80,resizable=yes,scrollbars=yes"
+      );
+    }
+  </script>
 </head>
 <body>
 
-<header>
-  <img src="assets/logo.png" alt="Logo">
-  <div>
+<header class="header-bar">
+  <img src="assets/logo.png" alt="Logo" width="120" title="Apex Accounts logo">
+
+  <div class="top-services">
+    <span onclick="openCalendar()" title="Open the calendar popup">Calendar</span>
+    <span onclick="window.location.href='chartOfAccounts.html'" title="Open the Chart of Accounts module">Chart of Accounts</span>
+    <span onclick="window.location.href='journalizing.html'" title="Open the Journalizing module">Journalizing</span>
+    <span onclick="window.location.href='ledger.html'" title="Open the Ledger module">Ledger</span>
+    <span onclick="openHelp()" title="Open help information for the software">Help</span>
+  </div>
+
+  <div class="user-area">
     <span id="headerUsername">Username: AdminUser</span>
-    <a href="profile.html">
+    <a href="profile.html" title="Open your user profile">
       <img src="assets/userAdmin.png" alt="User Profile" width="40" height="40">
     </a>
-    <a href="login.html">Logout</a>
+    <a href="login.html" title="Log out of the system">Logout</a>
   </div>
 </header>
 
@@ -26,8 +53,8 @@
   <!-- Step 1: look up user by email -->
   <form id="lookupForm">
     <label for="lookupEmail">User Email</label><br>
-    <input type="email" id="lookupEmail" placeholder="Enter user's email" required><br><br>
-    <button type="submit">Look Up User</button>
+    <input type="email" id="lookupEmail" placeholder="Enter user's email" required title="Enter the email address of the user you want to suspend"><br><br>
+    <button type="submit" title="Search for the user by email address">Look Up User</button>
   </form>
 
   <p id="lookupError" style="color:red; display:none;"></p>
@@ -35,25 +62,25 @@
   <!-- Step 2: shown after lookup -->
   <div id="suspendArea" style="display:none; margin-top:20px;">
     <h2>User Found</h2>
-    <p><strong>Name:</strong> <span id="foundName"></span></p>
-    <p><strong>Email:</strong> <span id="foundEmail"></span></p>
-    <p><strong>Role:</strong> <span id="foundRole"></span></p>
-    <p><strong>Current Status:</strong> <span id="foundStatus"></span></p>
+    <p><strong>Name:</strong> <span id="foundName" title="Displays the user's full name"></span></p>
+    <p><strong>Email:</strong> <span id="foundEmail" title="Displays the user's email address"></span></p>
+    <p><strong>Role:</strong> <span id="foundRole" title="Displays the user's current role"></span></p>
+    <p><strong>Current Status:</strong> <span id="foundStatus" title="Displays the user's current account status"></span></p>
 
     <form id="suspendForm">
       <label for="startdate">Suspension Start Date</label><br>
-      <input type="date" id="startdate" required><br><br>
+      <input type="date" id="startdate" required title="Select the date the suspension begins"><br><br>
 
       <label for="enddate">Suspension End Date</label><br>
-      <input type="date" id="enddate" required><br><br>
+      <input type="date" id="enddate" required title="Select the date the suspension ends"><br><br>
 
       <label for="reason">Reason</label><br>
-      <textarea id="reason" rows="3" placeholder="e.g. Extended leave, policy violation..." required></textarea><br><br>
+      <textarea id="reason" rows="3" placeholder="e.g. Extended leave, policy violation..." required title="Enter the reason for suspending this user"></textarea><br><br>
 
       <p id="suspendError" style="color:red; display:none;"></p>
 
-      <button type="submit">Suspend User</button>
-      <a href="adminDashboard.html">Cancel</a>
+      <button type="submit" title="Suspend this user for the selected date range">Suspend User</button>
+      <a href="adminDashboard.html" title="Cancel and return to the administrator dashboard">Cancel</a>
     </form>
   </div>
 </main>
@@ -69,63 +96,64 @@
 
   document.getElementById('lookupForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const email   = document.getElementById('lookupEmail').value.trim();
+    const email = document.getElementById('lookupEmail').value.trim();
     const errorEl = document.getElementById('lookupError');
     errorEl.style.display = 'none';
 
     try {
-      const q        = query(collection(db, "users"), where("email", "==", email));
+      const q = query(collection(db, "users"), where("email", "==", email));
       const snapshot = await getDocs(q);
 
       if (snapshot.empty) {
-        errorEl.textContent   = 'No user found with that email.';
+        errorEl.textContent = 'No user found with that email.';
         errorEl.style.display = 'block';
         return;
       }
 
-      const userDoc  = snapshot.docs[0];
+      const userDoc = snapshot.docs[0];
       const userData = userDoc.data();
-      foundUserId    = userDoc.id;
+      foundUserId = userDoc.id;
 
-      document.getElementById('foundName').textContent   = `${userData.firstName} ${userData.lastName}`;
-      document.getElementById('foundEmail').textContent  = userData.email;
-      document.getElementById('foundRole').textContent   = userData.role;
+      document.getElementById('foundName').textContent = `${userData.firstName} ${userData.lastName}`;
+      document.getElementById('foundEmail').textContent = userData.email;
+      document.getElementById('foundRole').textContent = userData.role;
       document.getElementById('foundStatus').textContent = userData.status;
       document.getElementById('suspendArea').style.display = 'block';
 
     } catch (err) {
-      errorEl.textContent   = 'Lookup failed: ' + err.message;
+      errorEl.textContent = 'Lookup failed: ' + err.message;
       errorEl.style.display = 'block';
     }
   });
 
   document.getElementById('suspendForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const errorEl   = document.getElementById('suspendError');
+    const errorEl = document.getElementById('suspendError');
     const startdate = document.getElementById('startdate').value;
-    const enddate   = document.getElementById('enddate').value;
-    const reason    = document.getElementById('reason').value.trim();
+    const enddate = document.getElementById('enddate').value;
+    const reason = document.getElementById('reason').value.trim();
     errorEl.style.display = 'none';
 
     if (new Date(enddate) <= new Date(startdate)) {
-      errorEl.textContent   = 'End date must be after start date.';
+      errorEl.textContent = 'End date must be after start date.';
       errorEl.style.display = 'block';
       return;
     }
 
     try {
       await updateDoc(doc(db, "users", foundUserId), {
-        status:           'suspended',
-        suspendedFrom:    startdate,
-        suspendedUntil:   enddate,
+        status: 'suspended',
+        suspendedFrom: startdate,
+        suspendedUntil: enddate,
         suspensionReason: reason
       });
       window.location.href = 'suspendConfirmation.html';
     } catch (err) {
-      errorEl.textContent   = 'Failed to suspend user: ' + err.message;
+      errorEl.textContent = 'Failed to suspend user: ' + err.message;
       errorEl.style.display = 'block';
     }
   });
 </script>
+
 </body>
 </html>
