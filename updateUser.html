@@ -51,7 +51,7 @@
 <main>
   <h1>Update User</h1>
 
-  <form action="#" method="post">
+  <form id="updateUserForm" action="#" method="post">
     <label for="userid">User ID</label><br>
     <input type="text" id="userid" name="userid" required title="Enter the user ID for the account you want to update"><br><br>
 
@@ -76,6 +76,40 @@
     <a href="adminDashboard.html" title="Cancel and return to the administrator dashboard">Cancel</a>
   </form>
 </main>
+
+<script type="module">
+  import { auth, db } from './firebase-config.js';
+  import { doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+  
+  document.getElementById('updateUserForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const id = document.getElementById('userid').value.trim();
+    const first = document.getElementById('firstname').value.trim();
+    const last = document.getElementById('lastname').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const role = document.getElementById('role').value;
+  
+    try {
+      const userRef  = doc(db, "users", id);
+      const userSnap = await getDoc(userRef);
+  
+      if(!userSnap.empty){
+        await updateDoc(userRef, {
+          firstName:    first,
+          lastName:     last,
+          email:        email,
+          role:         role,
+        });
+        alert("User has been successfully updated!");
+      } else {
+        alert("This user does not exist. Try again");
+      }
+    } catch (err) {
+      alert("Update failed: " + err.message);
+    }
+  });
+</script>
 
 </body>
 </html>
