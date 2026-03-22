@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>View Account - Apex Accounts</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+    <img src="assets/logo.png" alt="Apex Accounts Logo" width="120">
+
+    <div>
+        <span id="headerUsername">Username: </span>
+        <a href="profile.html" title="View your profile">
+            <img id="userAvatar" src="assets/userAccountant.png" alt="Profile" width="40" height="40">
+        </a>
+        <a href="login.html" onclick="localStorage.clear()" title="Log out of the system">Logout</a>
+    </div>
+</header>
+
+<main>
+    <h1>Account Details</h1>
+
+    <p id="loadingMsg">Loading account details...</p>
+    <p id="errorMsg" style="display:none; color:#ff6b6b;"></p>
+
+    <div id="accountCard" style="display:none;">
+        <p><strong>Account Name:</strong> <span id="d-name"></span> </p>
+        <p><strong>Account Number:</strong> <span id="d-number"></span></p>
+        <p><strong>Description:</strong> <span id="d-description"></span></p>
+        <p><strong>Normal Side:</strong> <span id="d-side"></span></p>
+        <p><strong>Category:</strong> <span id="d-category"></span></p>
+        <p><strong>Subcategory:</strong> <span id="d-subcategory"></span></p>
+        <p><strong>Initial Balance:</strong> <span id="d-initial"></span></p>
+        <p><strong>Debit:</strong> <span id="d-debit"></span></p>
+        <p><strong>Credit:</strong> <span id="d-credit"></span></p>
+        <p><strong>Balance:</strong> <span id="d-balance"></span></p>
+        <p><strong>Status:</strong> <span id="d-status"></span></p>
+        <p><strong>Statement:</strong> <span id="d-statement"></span></p>
+        <p><strong>Comment:</strong> <span id="d-comment"></span></p>
+        <p><strong>Date Added:</strong> <span id="d-date"></span></p>
+    </div>
+
+    <br>
+    <a href="chartofaccounts.html" title="Return to Chart of Accounts"> Back of Chart of Accounts</a>
+</main>
+
+<script type="module">
+    import { db} from './firebase-config.js';
+    import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const username = localStorage.getItem('username');
+    const role = localStorage.getItem('role');
+
+    if (username) {
+        document.getElementById('headerUsername').textContent = 'Username: ' + username;
+    }
+
+    const avatar = document.getElementById('userAvatar');
+    if (role === 'admin') avatar.src = 'assets/userAdmin.png';
+    else if (role === 'manager') avatar.src = 'assets/userAdmin.png';
+    else avatar.src = 'assets/userAccountant.png';
+
+    const accountId = sessionStorage.getItem('viewAccountId');
+
+    async function loadAccount() {
+        const loadingMsg = document.getElementById('loadingMsg');
+        const errorMsg = document.getElementById('errorMsg');
+        const accountCard = document.getElementById('accountCard');
+
+        if (!accountId) {
+            loadingMsg.style.display = 'none';
+            errorMsg.style.display = 'block';
+            errorMsg.textContent = 'No account was selected.';
+            return;
+        }
+
+        try {
+    const snap = await getDoc(doc(db, 'accounts', accountId));
+    loadingMsg.style.display = 'none';
+            
+
+            if (!snap.exists()) {
+                errorMsg.style.display = 'block';
+                errorMsg.textContent = 'Account not found.';
+                return;
+            }
+
+            const a = snap.data();
+
+            document.getElementById('d-name').textContent = a.accountName || '';
+            document.getElementById('d-number').textContent = a.accountNumber ||'';
+            document.getElementById('d-description').textContent = a.accountDescription ||'';
+            document.getElementById('d-side').textContent = a.normalSide || '';
+            document.getElementById('d-category').textContent = a.accountCategory ||'';
+            document.getElementById('d-subcategory').textContent = a.accountSubcategory ||'';
+            document.getElementById('d-initial').textContent = Number(a.initialBalance || 0).toFixed(2);
+            document.getElementById('d-debit').textContent = Number(a.debit || 0).toFixed(2);
+            document.getElementById('d-credit').textContent = Number(a.credit || 0).toFixed(2);
+            document.getElementById('d-balance').textContent = Number(a.balance || 0).toFixed(2);
+            document.getElementById('d-status').textContent = a.status || '';
+            document.getElementById('d-statement').textContent = a.statement || '';
+            document.getElementById('d-comment').textContent = a.comment || '';
+            document.getElementById('d-date').textContent = a.dateAdded || '';
+
+            accountCard.style.display = 'block'; 
+          } catch (err) {
+    loadingMsg.style.display = 'none';
+    errorMsg.style.display = 'block';
+    errorMsg.textContent = 'Failed to load account details: ' + err.message;
+    console.error(err);
+    }
+}
+        
+
+        loadAccount();
+      </script>
+      </body>
+      </html>

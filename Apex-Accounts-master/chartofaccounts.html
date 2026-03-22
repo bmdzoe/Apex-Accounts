@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Chart of Accounts – Apex Accounts</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <img src="assets/logo.png" alt="Apex Accounts Logo" width="120">
+  <div>
+    <span id="headerUsername">Username: </span>
+    <a href="profile.html" title="View your profile">
+      <img id="userAvatar" src="assets/userAccountant.png" alt="User Profile" width="40" height="40">
+    </a>
+    <a href="login.html" onclick="localStorage.clear()" title="Log out of Apex Accounts">Logout</a>
+  </div>
+</header>
+<main>
+  <h1>Chart of Accounts</h1>
+  <div style="margin: 20px 0; display:flex; gap:40px; flex-wrap:wrap;">
+    <div><h3>Total Accounts</h3><p id="s-total">0</p></div>
+    <div><h3>Asset</h3><p id="s-asset">0</p></div>
+    <div><h3>Liability</h3><p id="s-liability">0</p></div>
+    <div><h3>Equity</h3><p id="s-equity">0</p></div>
+    <div><h3>Revenue</h3><p id="s-revenue">0</p></div>
+    <div><h3>Expense</h3><p id="s-expense">0</p></div>
+  </div>
+  <div style="margin-bottom:16px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+    <input type="text" id="searchInput" placeholder="Search by name or number…"
+      title="Search accounts by name or account number (Spec #8)"
+      oninput="applyFilters()">
+    <select id="filterCategory" onchange="applyFilters()"
+      title="Filter accounts by category (Spec #12)">
+      <option value="">All Categories</option>
+      <option>Asset</option>
+      <option>Liability</option>
+      <option>Equity</option>
+      <option>Revenue</option>
+      <option>Expense</option>
+    </select>
+    <select id="filterSubcategory" onchange="applyFilters()"
+      title="Filter accounts by subcategory (Spec #12)">
+      <option value="">All Subcategories</option>
+    </select>
+    <select id="filterStatus" onchange="applyFilters()"
+      title="Filter accounts by active or inactive status (Spec #12)">
+      <option value="">All Status</option>
+      <option value="true">Active</option>
+      <option value="false">Inactive</option>
+    </select>
+    <select id="filterStatement" onchange="applyFilters()"
+      title="Filter accounts by financial statement (Spec #12)">
+      <option value="">All Statements</option>
+      <option value="BS">Balance Sheet (BS)</option>
+      <option value="IS">Income Statement (IS)</option>
+      <option value="RE">Retained Earnings (RE)</option>
+    </select>
+    <button onclick="exportCSV()"
+      title="Export the current filtered account list to a CSV file">
+      Export CSV
+    </button>
+    <button id="addAccountBtn" onclick="window.location.href='addEditAccount.html'"
+      title="Add a new account to the Chart of Accounts (administrators only)"
+      style="display:none;">
+      + Add Account
+    </button>
+    <span id="rowCount" style="margin-left:auto;"></span>
+  </div>
+  <p id="loadingMsg">Loading accounts…</p>
+  <p id="emptyMsg" style="display:none;">No accounts match your search or filters.</p>
+  <div id="tableWrap" style="display:none; overflow-x:auto;">
+    <table border="1" cellpadding="8" cellspacing="0" id="accountsTable" style="width:100%; min-width:900px;">
+      <thead>
+        <tr>
+          <th onclick="sortBy('accountNumber')" style="cursor:pointer;" title="Sort by account number">Number ↕</th>
+          <th onclick="sortBy('accountName')"   style="cursor:pointer;" title="Sort by account name">Name ↕</th>
+          <th onclick="sortBy('accountCategory')" style="cursor:pointer;" title="Sort by category">Category ↕</th>
+          <th>Subcategory</th>
+          <th>Normal Side</th>
+          <th>Statement</th>
+          <th onclick="sortBy('balance')" style="cursor:pointer; text-align:right;" title="Sort by balance">Balance ↕</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="accountsBody"></tbody>
+    </table>
+  </div>
+  <div id="pagRow" style="display:none; margin-top:10px; display:flex; align-items:center; justify-content:space-between;">
+    <span id="pagInfo"></span>
+    <div id="pagBtns"></div>
+  </div>
+  <br>
+  <a href="javascript:history.back()" title="Return to the Dashboard">← Back to Dashboard</a>
+</main>
+<dialog id="deactivateDialog">
+  <h3>Deactivate Account</h3>
+  <p id="deactivateDialogMsg"></p>
+  <p id="deactivateBalanceWarn" style="color:red; display:none;">
+    ⚠ This account has a balance greater than zero and cannot be deactivated (Spec #6).
+  </p>
+  <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:16px;">
+    <button onclick="document.getElementById('deactivateDialog').close()"
+      title="Cancel — keep the account active">Cancel</button>
+    <button id="confirmDeactivateBtn"
+      title="Confirm deactivation of this account"
+      style="background:red; color:white; border:none; padding:8px 14px; cursor:pointer;">
+      Deactivate
+    </button>
+  </div>
+</dialog>
+<script type="module">
+  import { auth, db } from './firebase-config.js';
+  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  import {
+    collection, getDocs, doc, getDoc, updateDoc, addDoc, serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+  const normalSideMap = { Asset:'Debit', Expense:'Debit', Liability:'Credit', Equity:'Credit', Revenue:'Credit' };
+  let allAccounts      = [];
+  let filteredAccounts = [];
+  let sortCol          = 'accountNumber';
+  let sortAsc          = true;
+  let currentPage      = 1;
+  let userRole         = '';
+  let currentUserId    = '';
+  const PAGE_SIZE      = 15;
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) { window.location.href = 'login.html'; return; }
+    currentUserId = user.uid;
+    const snap = await getDoc(doc(db, 'users', user.uid));
+    if (!snap.exists()) { window.location.href = 'login.html'; return; }
+    const ud = snap.data();
+    userRole = ud.role || '';
+    document.getElementById('headerUsername').textContent = 'Username: ' + (ud.username || '');
+    const av = document.getElementById('userAvatar');
+    if (ud.role === 'administrator') av.src = 'assets/userAdmin.png';
+    else if (ud.role === 'manager')  av.src = 'assets/userManager.png';
+    if (ud.role === 'administrator') {
+      document.getElementById('addAccountBtn').style.display = 'inline-block';
+    }
+    loadAccounts();
+  });
+  async function loadAccounts() {
+    try {
+      const snap = await getDocs(collection(db, 'accounts'));
+      document.getElementById('loadingMsg').style.display = 'none';
+      if (snap.empty) {
+        document.getElementById('emptyMsg').style.display = 'block';
+        updateStats([]);
+        return;
+      }
+      allAccounts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      populateSubcategoryFilter();
+      applyFilters();
+    } catch (err) {
+      document.getElementById('loadingMsg').textContent = 'Failed to load accounts: ' + err.message;
+    }
+  }
+  function populateSubcategoryFilter() {
+    const subs = [...new Set(allAccounts.map(a => a.accountSubcategory).filter(Boolean))].sort();
+    const sel  = document.getElementById('filterSubcategory');
+    subs.forEach(s => {
+      const o = document.createElement('option'); o.value = s; o.textContent = s; sel.appendChild(o);
+    });
+  }
+  window.applyFilters = function () {
+    const q    = document.getElementById('searchInput').value.toLowerCase();
+    const cat  = document.getElementById('filterCategory').value;
+    const sub  = document.getElementById('filterSubcategory').value;
+    const stat = document.getElementById('filterStatus').value;
+    const stmt = document.getElementById('filterStatement').value;
+    filteredAccounts = allAccounts.filter(a =>
+      (!q    || (a.accountNumber||'').toLowerCase().includes(q) || (a.accountName||'').toLowerCase().includes(q)) &&
+      (!cat  || a.accountCategory    === cat)  &&
+      (!sub  || a.accountSubcategory === sub)  &&
+      (stat === '' || String(a.isActive) === stat) &&
+      (!stmt || a.statement === stmt)
+    );
+    currentPage = 1;
+    sortAndRender();
+  };
+  window.sortBy = function (col) {
+    if (sortCol === col) sortAsc = !sortAsc; else { sortCol = col; sortAsc = true; }
+    sortAndRender();
+  };
+  function sortAndRender() {
+    filteredAccounts.sort((a, b) => {
+      let va = a[sortCol] ?? '', vb = b[sortCol] ?? '';
+      if (sortCol === 'balance') { va = Number(va); vb = Number(vb); return sortAsc ? va - vb : vb - va; }
+      return sortAsc ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
+    });
+    renderTable();
+    updateStats(allAccounts);
+  }
+  function renderTable() {
+    const total = filteredAccounts.length;
+    document.getElementById('rowCount').textContent = `${total} account${total !== 1 ? 's' : ''}`;
+    if (total === 0) {
+      document.getElementById('tableWrap').style.display = 'none';
+      document.getElementById('emptyMsg').style.display  = 'block';
+      document.getElementById('pagRow').style.display    = 'none';
+      return;
+    }
+    document.getElementById('emptyMsg').style.display  = 'none';
+    document.getElementById('tableWrap').style.display = 'block';
+    document.getElementById('pagRow').style.display    = 'flex';
+    const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+    if (currentPage > totalPages) currentPage = totalPages;
+    const start    = (currentPage - 1) * PAGE_SIZE;
+    const pageRows = filteredAccounts.slice(start, start + PAGE_SIZE);
+    const isAdmin  = userRole === 'administrator';
+    const fmtMoney = (v, cur = 'USD') => new Intl.NumberFormat('en-US', {
+      style:'currency', currency: cur,
+      minimumFractionDigits: 2, maximumFractionDigits: 2
+    }).format(v);
+    document.getElementById('accountsBody').innerHTML = pageRows.map(a => {
+      const bal    = Number(a.balance ?? 0);
+      const balFmt = fmtMoney(bal, a.currency || 'USD');
+      const status = a.isActive !== false ? 'Active' : 'Inactive';
+      const adminBtns = isAdmin ? `
+        <button onclick="editAccount('${a.id}')"
+          title="Edit account ${a.accountNumber} — ${a.accountName}">Edit</button>
+        <button onclick="promptDeactivate('${a.id}', '${(a.accountName||'').replace(/'/g,"\\'")}', ${bal})"
+          title="${a.isActive !== false ? `Deactivate account ${a.accountNumber}` : 'Account is already inactive'}"
+          ${a.isActive === false ? 'disabled' : ''}>
+          Deactivate
+        </button>` : '';
+      return `
+        <tr>
+          <td>${a.accountNumber || ''}</td>
+          <td>
+            <a href="ledger.html?accountId=${a.id}"
+              title="View the ledger for ${a.accountNumber} — ${a.accountName} (Spec #11)">
+              ${a.accountName || ''}
+            </a>
+          </td>
+          <td>${a.accountCategory || ''}</td>
+          <td>${a.accountSubcategory || '—'}</td>
+          <td>${a.normalSide || normalSideMap[a.accountCategory] || '—'}</td>
+          <td>${a.statement || '—'}</td>
+          <td style="text-align:right;">${balFmt}</td>
+          <td>${status}</td>
+          <td>
+            <button onclick="viewAccount('${a.id}')"
+              title="View full details of account ${a.accountNumber}">View</button>
+            ${adminBtns}
+          </td>
+        </tr>`;
+    }).join('');
+    document.getElementById('pagInfo').textContent =
+      `Showing ${start + 1}–${Math.min(start + PAGE_SIZE, total)} of ${total}`;
+    renderPagination(totalPages);
+  }
+  function renderPagination(totalPages) {
+    const c = document.getElementById('pagBtns');
+    c.innerHTML = '';
+    if (totalPages <= 1) return;
+    const mkBtn = (label, p, disabled) => {
+      const b = document.createElement('button');
+      b.textContent = label; b.disabled = disabled;
+      b.title = `Go to page ${p}`;
+      b.onclick = () => { currentPage = p; renderTable(); };
+      return b;
+    };
+    c.appendChild(mkBtn('←', currentPage - 1, currentPage === 1));
+    for (let i = 1; i <= totalPages; i++) c.appendChild(mkBtn(String(i), i, false));
+    c.appendChild(mkBtn('→', currentPage + 1, currentPage === totalPages));
+  }
+  function updateStats(accounts) {
+    document.getElementById('s-total').textContent     = accounts.length;
+    document.getElementById('s-asset').textContent     = accounts.filter(a => a.accountCategory === 'Asset').length;
+    document.getElementById('s-liability').textContent = accounts.filter(a => a.accountCategory === 'Liability').length;
+    document.getElementById('s-equity').textContent    = accounts.filter(a => a.accountCategory === 'Equity').length;
+    document.getElementById('s-revenue').textContent   = accounts.filter(a => a.accountCategory === 'Revenue').length;
+    document.getElementById('s-expense').textContent   = accounts.filter(a => a.accountCategory === 'Expense').length;
+  }
+  window.viewAccount = function (id) {
+    sessionStorage.setItem('viewAccountId', id);
+    window.location.href = 'viewAccount.html';
+  };
+  window.editAccount = function (id) {
+    sessionStorage.setItem('editAccountId', id);
+    window.location.href = 'addEditAccount.html';
+  };
+  let pendingDeactivateId = null;
+  window.promptDeactivate = function (id, name, balance) {
+    pendingDeactivateId = id;
+    const hasBalance    = balance > 0;
+    document.getElementById('deactivateDialogMsg').textContent =
+      hasBalance
+        ? `"${name}" has a non-zero balance and cannot be deactivated.`
+        : `Are you sure you want to deactivate "${name}"? It will be hidden from transaction entry.`;
+    document.getElementById('deactivateBalanceWarn').style.display  = hasBalance ? 'block' : 'none';
+    document.getElementById('confirmDeactivateBtn').disabled        = hasBalance;
+    document.getElementById('deactivateDialog').showModal();
+  };
+  document.getElementById('confirmDeactivateBtn').addEventListener('click', async () => {
+    if (!pendingDeactivateId) return;
+    const target = allAccounts.find(a => a.id === pendingDeactivateId);
+    try {
+      await updateDoc(doc(db, 'accounts', pendingDeactivateId), {
+        isActive: false, updatedAt: serverTimestamp()
+      });
+      await addDoc(collection(db, 'eventLogs'), {
+        eventType: 'ACCOUNT_DEACTIVATED',
+        accountId: pendingDeactivateId,
+        before:    target || null,
+        after:     { ...target, isActive: false },
+        userId:    currentUserId,
+        timestamp: serverTimestamp(),
+      });
+      const idx = allAccounts.findIndex(a => a.id === pendingDeactivateId);
+      if (idx > -1) allAccounts[idx].isActive = false;
+      document.getElementById('deactivateDialog').close();
+      applyFilters();
+    } catch (err) {
+      alert('Failed to deactivate: ' + err.message);
+    }
+  });
+  window.exportCSV = function () {
+    const fmtMoney = v => new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: 2, maximumFractionDigits: 2
+    }).format(v);
+    const rows = [['Account Number','Account Name','Category','Subcategory','Normal Side',
+                   'Statement','Initial Balance','Debit','Credit','Balance','Currency','Status','Order','Description']];
+    filteredAccounts.forEach(a => {
+      rows.push([
+        a.accountNumber || '', a.accountName || '', a.accountCategory || '',
+        a.accountSubcategory || '', a.normalSide || '', a.statement || '',
+        fmtMoney(a.initialBalance || 0), fmtMoney(a.debit  || 0),
+        fmtMoney(a.credit         || 0), fmtMoney(a.balance || 0),
+        a.currency || 'USD',
+        a.isActive !== false ? 'Active' : 'Inactive',
+        a.orderNum || '', (a.accountDescription || '').replace(/"/g, '""')
+      ]);
+    });
+    const csv  = rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'chart-of-accounts.csv';
+    link.click();
+  };
+</script>
+</body>
+</html>
