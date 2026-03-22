@@ -41,9 +41,9 @@
   </div>
 
   <div class="user-area">
-    <span title="Displays the current logged in username">Username: AdminUser</span>
+    <span id="headerUsername" title="Displays the current logged in username">Username: </span>
     <a href="profile.html" title="Open your user profile">
-      <img src="assets/userAdmin.png" width="40" alt="User Profile">
+      <img id="profileIcon" src="assets/userAccountant.png" width="40" alt="User Profile">
     </a>
     <a href="login.html" title="Log out of the system">Logout</a>
   </div>
@@ -73,7 +73,7 @@
     <input type="date" id="dob" title="Select or update your date of birth"><br><br>
 
     <button type="submit" title="Save the changes made to your profile">Save Changes</button>
-    <a href="javascript:history.back()" title="Cancel changes and return to the dashboard">Cancel</a>
+    <a href="#" id="cancelLink" title="Cancel changes and return to your dashboard">Cancel</a>
 
   </form>
 </main>
@@ -86,7 +86,6 @@
   const profileForm = document.getElementById('profileForm');
   let currentUserUid = null;
 
-  // loading user data
   onAuthStateChanged(auth, async (user) => {
     if (user) {
       currentUserUid = user.uid;
@@ -95,21 +94,35 @@
 
       if (docSnap.exists()) {
         const userData = docSnap.data();
-        
-        // getting database info
+
         document.getElementById('userId').value = user.uid;
         document.getElementById('email').value = user.email;
         document.getElementById('firstName').value = userData.firstName || "";
         document.getElementById('lastName').value = userData.lastName || "";
         document.getElementById('address').value = userData.address || "";
         document.getElementById('dob').value = userData.dob || "";
+
+        document.getElementById('headerUsername').innerText = `Username: ${userData.username || ""}`;
+
+        const profileIcon = document.getElementById('profileIcon');
+        const cancelLink = document.getElementById('cancelLink');
+
+        if (userData.role === "administrator") {
+          profileIcon.src = "assets/userAdmin.png";
+          cancelLink.href = "adminDashboard.html";
+        } else if (userData.role === "manager") {
+          profileIcon.src = "assets/userManager.png";
+          cancelLink.href = "managerDashboard.html";
+        } else {
+          profileIcon.src = "assets/userAccountant.png";
+          cancelLink.href = "accountantDashboard.html";
+        }
       }
     } else {
       window.location.href = "login.html";
     }
   });
 
-  // new data will be saved on submit
   profileForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
