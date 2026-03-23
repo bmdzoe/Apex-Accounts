@@ -261,6 +261,8 @@
           <td>
             <button onclick="viewAccount('${a.id}')"
               title="View full details of account ${a.accountNumber}">View</button>
+            <button onclick="window.location.href='ledger.html?accountId=${a.id}'"
+              title="View the ledger for ${a.accountNumber} — ${a.accountName}">Ledger</button>
             ${adminBtns}
           </td>
         </tr>`;
