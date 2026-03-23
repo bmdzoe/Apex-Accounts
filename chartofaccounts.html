@@ -94,7 +94,22 @@
     <div id="pagBtns"></div>
   </div>
   <br>
-  <a href="javascript:history.back()" title="Return to the Dashboard">← Back to Dashboard</a>
+
+<a href="#" onclick="goToDashboard()" title="Return to your specific Dashboard">← Back to Dashboard</a>
+
+<script>
+  function goToDashboard() {
+    const userRole = localStorage.getItem('role'); 
+    if (userRole === 'administrator') {
+      window.location.href = 'adminDashboard.html';
+    } else if (userRole === 'manager') {
+      window.location.href = 'managerDashboard.html';
+    } else {
+      window.location.href = 'accountantDashboard.html';
+    }
+  }
+</script>
+
 </main>
 <dialog id="deactivateDialog">
   <h3>Deactivate Account</h3>
