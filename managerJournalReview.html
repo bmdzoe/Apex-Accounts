@@ -233,14 +233,18 @@
     const batch = writeBatch(db);
     for (const line of (entry.lines||[])) {
       batch.set(doc(collection(db, 'ledgerEntries')), {
-        accountId: line.accountId, accountName: line.accountName,
-        journalEntryId, date: entry.date,
-        description: entry.description||'', reference: entry.reference||'',
-        type: line.type,
-        debit:  line.type === 'debit'  ? line.amount : 0,
-        credit: line.type === 'credit' ? line.amount : 0,
-        postedBy: uid, postedAt: serverTimestamp()
-      });
+	      accountId: line.accountId,
+      	accountName: line.accountName,
+  	    journalEntryId: journalEntryId,
+      	postRef: entry.reference || journalEntryId.substring(0, 8),
+      	date: entry.date,
+      	description: entry.description || '',
+      	type: line.type,
+      	debit: line.type === 'debit' ? line.amount : 0,
+      	credit: line.type === 'credit' ? line.amount : 0,
+      	postedBy: uid,
+      	postedAt: serverTimestamp()
+  });
       const acctSnap = await getDoc(doc(db, 'accounts', line.accountId));
       if (acctSnap.exists()) {
         const a = acctSnap.data();
