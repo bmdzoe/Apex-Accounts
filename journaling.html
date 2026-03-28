@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Journaling – Apex Accounts</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="header-bar">
+  <img src="assets/logo.png" alt="Logo" width="120">
+  <div class="top-services">
+    <span onclick="window.open('calendar.html','Cal','width=500,height=550')">Calendar</span>
+    <span onclick="location.href='chartOfAccounts.html'">Chart of Accounts</span>
+    <span onclick="location.href='journaling.html'">Journaling</span>
+    <span onclick="window.open('help.html','Help','width=700,height=600,scrollbars=yes')">Help</span>
+  </div>
+  <div class="user-area">
+    <span id="uname">Username: </span>
+    <a href="profile.html"><img id="avatar" src="assets/userAccountant.png" width="40" height="40" alt="Profile"></a>
+    <a href="login.html" onclick="localStorage.clear()">Logout</a>
+  </div>
+</header>
+<main>
+  <h1>Journaling</h1>
+  <p id="msg" style="display:none"></p>
+  <h2>New Journal Entry</h2>
+  <label>Date *</label><br>
+  <input type="date" id="jeDate" required><br><br>
+  <label>Description</label><br>
+  <input type="text" id="jeDesc" placeholder="Optional description…"><br><br>
+  <label>Reference #</label><br>
+  <input type="text" id="jeRef" placeholder="e.g. INV-001"><br><br>
+  <p><strong>Debits</strong></p>
+  <div id="debitLines"></div>
+  <button type="button" onclick="addLine('debit')">+ Add Debit Line</button>
+  <br><br>
+  <p><strong>Credits</strong></p>
+  <div id="creditLines"></div>
+  <button type="button" onclick="addLine('credit')">+ Add Credit Line</button>
+  <br><br>
+  <p>Total Debits: <strong id="tD">$0.00</strong> &nbsp; Total Credits: <strong id="tC">$0.00</strong></p>
+  <p id="balMsg"></p>
+  <p id="lineErr" style="color:red; display:none">At least one debit and one credit line are required.</p>
+  <p>
+    <strong>Source Documents</strong><br>
+    <small>Allowed: PDF, Word, Excel, CSV, JPG, PNG</small><br>
+    <input type="file" id="files" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.jpg,.jpeg,.png" onchange="addFiles(event)">
+  </p>
+  <div id="fileList"></div>
+  <br>
+  <button type="button" id="submitBtn" onclick="submitEntry()">Submit for Approval</button>
+  <button type="button" onclick="resetForm()">Reset</button>
+  <a href="#" onclick="goBack(event)">Cancel</a>
+  <br><br><hr>
+  <h2>Journal Entries</h2>
+  <input type="text" id="srch" placeholder="Search account, amount, date…" oninput="filter()">
+  <select id="fStat" onchange="filter()">
+    <option value="">All Statuses</option>
+    <option>pending</option>
+    <option>approved</option>
+    <option>rejected</option>
+  </select>
+  <input type="date" id="fFrom" onchange="filter()">
+  to
+  <input type="date" id="fTo" onchange="filter()">
+  <button onclick="clearF()">Clear</button>
+  <br><br>
+  <p id="eLoad">Loading…</p>
+  <p id="eEmpty" style="display:none">No entries found.</p>
+  <table border="1" cellpadding="8" cellspacing="0" id="eTable" style="display:none; width:100%">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Description</th>
+        <th>Accounts</th>
+        <th>Debits</th>
+        <th>Credits</th>
+        <th>Status</th>
+        <th>Submitted By</th>
+        <th>Rejection Comment</th>
+      </tr>
+    </thead>
+    <tbody id="eTbody"></tbody>
+  </table>
+  <br>
+  <a href="#" onclick="goBack(event)">← Back to Dashboard</a>
+</main>
+<script type="module">
+  import { auth, db } from './firebase-config.js';
+  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  import { collection, getDocs, addDoc, doc, getDoc, query, where, orderBy, serverTimestamp }
+    from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+  import { getStorage, ref, uploadBytes, getDownloadURL }
+    from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+  let uid, uname, role, accounts = [], attachments = [], allEntries = [];
+  const fmt = v => new Intl.NumberFormat('en-US', { style:'currency', currency:'USD', minimumFractionDigits:2 }).format(v);
+  onAuthStateChanged(auth, async user => {
+    if (!user) return location.href = 'login.html';
+    uid = user.uid;
+    const ud = (await getDoc(doc(db, 'users', uid))).data();
+    uname = ud.username; role = ud.role;
+    document.getElementById('uname').textContent = 'Username: ' + uname;
+    if (ud.role === 'manager') document.getElementById('avatar').src = 'assets/userManager.png';
+    if (ud.role === 'administrator') document.getElementById('avatar').src = 'assets/userAdmin.png';
+    document.getElementById('jeDate').valueAsDate = new Date();
+    accounts = (await getDocs(query(collection(db, 'accounts'), where('isActive', '==', true))))
+      .docs.map(d => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => a.accountNumber.localeCompare(b.accountNumber));
+    addLine('debit'); addLine('credit');
+    loadEntries();
+  });
+  const acctOpts = () => '<option value="">— Select account —</option>' +
+    accounts.map(a => `<option value="${a.id}" data-name="${a.accountName}">${a.accountNumber} — ${a.accountName}</option>`).join('');
+  window.addLine = type => {
+    const id = 'l' + Date.now();
+    const div = document.createElement('div');
+    div.id = id;
+    div.innerHTML = `
+      <select onchange="recalc()">${acctOpts()}</select>
+      <input type="number" min="0.01" step="0.01" placeholder="0.00" oninput="recalc()" data-t="${type}">
+      <button type="button" onclick="rmLine('${id}','${type}')">Remove</button><br><br>`;
+    document.getElementById(type === 'debit' ? 'debitLines' : 'creditLines').appendChild(div);
+    recalc();
+  };
+  window.rmLine = (id, type) => {
+    const cont = document.getElementById(type === 'debit' ? 'debitLines' : 'creditLines');
+    if (cont.children.length <= 1) return showErr('Need at least one ' + type + ' line.');
+    document.getElementById(id).remove(); recalc();
+  };
+  window.recalc = () => {
+    const sum = t => [...document.querySelectorAll(`[data-t="${t}"]`)].reduce((s, i) => s + (parseFloat(i.value) || 0), 0);
+    const d = sum('debit'), c = sum('credit'), diff = Math.abs(d - c);
+    document.getElementById('tD').textContent = fmt(d);
+    document.getElementById('tC').textContent = fmt(c);
+    const el = document.getElementById('balMsg');
+    el.textContent = d > 0 && diff < .005 ? '✓ Balanced.' : d === 0 ? '⚠ Enter amounts.' : `⚠ Off by ${fmt(diff)}`;
+    el.style.color = diff < .005 && d > 0 ? 'green' : 'red';
+  };
+  const allowed = ['pdf','doc','docx','xls','xlsx','csv','jpg','jpeg','png'];
+  window.addFiles = e => {
+    [...e.target.files].forEach(f => {
+      const ext = f.name.split('.').pop().toLowerCase();
+      if (!allowed.includes(ext)) return showErr(`.${ext} not allowed.`);
+      const idx = attachments.length;
+      attachments.push(f);
+      const d = document.createElement('div');
+      d.id = 'f' + idx;
+      d.innerHTML = `📎 ${f.name} <button type="button" onclick="rmFile(${idx})">Remove</button>`;
+      document.getElementById('fileList').appendChild(d);
+    });
+    e.target.value = '';
+  };
+  window.rmFile = idx => { attachments[idx] = null; document.getElementById('f' + idx)?.remove(); };
+  window.submitEntry = async () => {
+    hideMsg();
+    const date = document.getElementById('jeDate').value;
+    if (!date) return showErr('Date is required.');
+    const lines = [];
+    for (const type of ['debit', 'credit']) {
+      document.querySelectorAll(`#${type}Lines [data-t]`).forEach(inp => {
+        const row = inp.closest('div');
+        const sel = row.querySelector('select');
+        const amt = parseFloat(inp.value) || 0;
+        if (sel.value && amt > 0) lines.push({
+          type, accountId: sel.value,
+          accountName: sel.options[sel.selectedIndex].dataset.name,
+          amount: parseFloat(amt.toFixed(2))
+        });
+      });
+    }
+    const debits = lines.filter(l => l.type === 'debit');
+    const credits = lines.filter(l => l.type === 'credit');
+    if (!debits.length || !credits.length) {
+      document.getElementById('lineErr').style.display = 'block'; return;
+    }
+    document.getElementById('lineErr').style.display = 'none';
+    const tD = debits.reduce((s, l) => s + l.amount, 0);
+    const tC = credits.reduce((s, l) => s + l.amount, 0);
+    if (Math.abs(tD - tC) >= .005) return showErr(`Debits (${fmt(tD)}) ≠ Credits (${fmt(tC)}). Difference: ${fmt(Math.abs(tD - tC))}`);
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true; btn.textContent = 'Submitting…';
+    try {
+      const storage = getStorage();
+      const attMeta = [];
+      for (const f of attachments.filter(Boolean)) {
+        try {
+          const r = ref(storage, `journal-attachments/${Date.now()}_${f.name}`);
+          await uploadBytes(r, f);
+          attMeta.push({ name: f.name, url: await getDownloadURL(r) });
+        } catch { attMeta.push({ name: f.name, url: null }); }
+      }
+      const entryRef = await addDoc(collection(db, 'journalEntries'), {
+        date, description: document.getElementById('jeDesc').value.trim(),
+        reference: document.getElementById('jeRef').value.trim(),
+        lines, totalDebit: parseFloat(tD.toFixed(2)), totalCredit: parseFloat(tC.toFixed(2)),
+        attachments: attMeta, status: 'pending',
+        submittedBy: uid, submittedByUsername: uname,
+        createdAt: serverTimestamp(), rejectionComment: null
+      });
+      addDoc(collection(db, 'notifications'), {
+        type: 'JOURNAL_ENTRY_SUBMITTED', entryId: entryRef.id,
+        message: `${uname} submitted a journal entry on ${date} for review.`,
+        forRole: 'manager', read: false, createdAt: serverTimestamp()
+      }).catch(() => {});
+      showSuccess('✓ Submitted — pending manager approval.');
+      resetFormFields();
+      loadEntries();
+    } catch (e) { showErr('Submission failed: ' + e.message); }
+    finally { btn.disabled = false; btn.textContent = 'Submit for Approval'; }
+  };
+  window.resetForm = () => { if (confirm('Reset form?')) resetFormFields(); };
+  function resetFormFields() {
+    document.getElementById('jeDate').valueAsDate = new Date();
+    ['jeDesc', 'jeRef'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('debitLines').innerHTML = '';
+    document.getElementById('creditLines').innerHTML = '';
+    document.getElementById('fileList').innerHTML = '';
+    attachments = [];
+    addLine('debit'); addLine('credit'); recalc();
+  }
+  window.goBack = e => {
+    e.preventDefault();
+    if (confirm('Go back to dashboard?'))
+      location.href = role === 'manager' ? 'managerDashboard.html' : 'accountantDashboard.html';
+  };
+  async function loadEntries() {
+    try {
+      allEntries = (await getDocs(query(collection(db, 'journalEntries'), orderBy('createdAt', 'desc'))))
+        .docs.map(d => ({ id: d.id, ...d.data() }));
+      document.getElementById('eLoad').style.display = 'none';
+      filter();
+    } catch (e) { document.getElementById('eLoad').textContent = 'Load failed: ' + e.message; }
+  }
+
+  window.filter = () => {
+    const q = document.getElementById('srch').value.toLowerCase();
+    const s = document.getElementById('fStat').value;
+    const from = document.getElementById('fFrom').value;
+    const to = document.getElementById('fTo').value;
+    const rows = allEntries.filter(e =>
+      (!s || e.status === s) && (!from || e.date >= from) && (!to || e.date <= to) &&
+      (!q || (e.lines||[]).map(l => l.accountName||'').join(' ').toLowerCase().includes(q) ||
+             (e.date||'').includes(q) || (e.description||'').toLowerCase().includes(q) ||
+             String(e.totalDebit||'').includes(q) || String(e.totalCredit||'').includes(q))
+    );
+    const empty = document.getElementById('eEmpty'), table = document.getElementById('eTable');
+    if (!rows.length) { table.style.display = 'none'; empty.style.display = 'block'; return; }
+    empty.style.display = 'none'; table.style.display = 'table';
+    document.getElementById('eTbody').innerHTML = rows.map(e => `
+      <tr>
+        <td>${e.date||'—'}</td>
+        <td>${e.description||'—'}${e.reference ? `<br><small>Ref: ${e.reference}</small>` : ''}</td>
+        <td>${(e.lines||[]).map(l => `${l.type==='debit'?'Dr':'Cr'}: ${l.accountName||l.accountId}`).join('<br>')}</td>
+        <td>${fmt(e.totalDebit||0)}</td>
+        <td>${fmt(e.totalCredit||0)}</td>
+        <td>${e.status||'pending'}</td>
+        <td>${e.submittedByUsername||'—'}</td>
+        <td style="color:red">${e.rejectionComment||'—'}</td>
+      </tr>`).join('');
+  };
+  window.clearF = () => {
+    ['srch','fFrom','fTo'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('fStat').value = ''; filter();
+  };
+  function showErr(msg) {
+    const el = document.getElementById('msg');
+    el.textContent = msg; el.style.color = 'red'; el.style.display = 'block';
+  }
+  function showSuccess(msg) {
+    const el = document.getElementById('msg');
+    el.textContent = msg; el.style.color = 'green'; el.style.display = 'block';
+    setTimeout(() => el.style.display = 'none', 6000);
+  }
+  function hideMsg() { document.getElementById('msg').style.display = 'none'; }
+</script>
+</body>
+</html>

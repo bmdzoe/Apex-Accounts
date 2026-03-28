@@ -6,7 +6,6 @@
   <title>Manager Dashboard</title>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
-
   <script>
     function openCalendar() {
       window.open(
@@ -15,7 +14,6 @@
         "width=500,height=550,left=100,top=100,resizable=yes,scrollbars=no"
       );
     }
-
     function openHelp() {
       window.open(
         "help.html",
@@ -26,18 +24,14 @@
   </script>
 </head>
 <body>
-
 <header class="header-bar">
   <img src="assets/logo.png" alt="Logo" width="120" title="Apex Accounts logo">
-
   <div class="top-services">
     <span onclick="openCalendar()" title="Open the calendar popup">Calendar</span>
     <span onclick="window.location.href='chartOfAccounts.html'" title="Open the Chart of Accounts module">Chart of Accounts</span>
-    <span onclick="window.location.href='journalizing.html'" title="Open the Journalizing module">Journalizing</span>
-   <!-- <span onclick="window.location.href='ledger.html'" title="Open the Ledger module">Ledger</span> -->
+    <span onclick="window.location.href='journaling.html'" title="Open the Journaling module">Journaling</span>
     <span onclick="openHelp()" title="Open help information for the software">Help</span>
   </div>
-
   <div class="user-area">
     <span id="headerUsername">Username: ManagerUser</span>
     <a href="profile.html" title="Open your user profile">
@@ -46,49 +40,63 @@
     <a href="login.html" title="Log out of the system">Logout</a>
   </div>
 </header>
-
 <main>
   <h1>Manager Dashboard</h1>
-
+  <div id="pendingAlert" style="display:none; background:rgba(201,168,76,0.1); border:1px solid #c9a84c; border-radius:6px; padding:12px 16px; margin-bottom:20px;">
+    <strong style="color:#c9a84c;">⏳ Journal Entries Awaiting Approval:</strong>
+    <span id="pendingCount" style="color:#c9a84c; font-weight:700; margin-left:6px;">0</span>
+    <a href="managerJournalReview.html" style="margin-left:14px; font-size:0.85rem;" title="Go to journal entry review page">Review Now →</a>
+  </div>
   <nav>
     <ul>
       <li><a href="chartOfAccounts.html" title="View the chart of accounts">View Chart of Accounts</a></li>
+      <li>
+        <a href="managerJournalReview.html" title="Review and approve or reject submitted journal entries">
+          Review Journal Entries
+          <span id="navPendingBadge" style="display:none; margin-left:8px; background:#c9a84c; color:#080b0f; border-radius:10px; padding:1px 8px; font-size:0.72rem; font-weight:700;"></span>
+        </a>
+      </li>
+      <li><a href="journaling.html" title="Create a new journal entry">Create Journal Entry</a></li>
       <li><a href="viewUsersReport.html" title="View reports available to manager">View Reports</a></li>
       <li><a href="expiredPasswordsReport.html" title="View users with expired passwords">Expired Passwords Report</a></li>
       <li><a href="sendEmail.html" title="Send an email from within the system">Send Email</a></li>
     </ul>
   </nav>
 </main>
-
 <script type="module">
   import { auth, db } from "./firebase-config.js";
   import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-  import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
+  import { doc, getDoc, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
       window.location.href = "login.html";
       return;
     }
-
     const userRef = doc(db, "users", user.uid);
     const userSnap = await getDoc(userRef);
-
     if (!userSnap.exists()) {
       window.location.href = "login.html";
       return;
     }
-
     const userData = userSnap.data();
-
     if (userData.role !== "manager") {
       window.location.href = "login.html";
       return;
     }
-
     document.getElementById("headerUsername").textContent = "Username: " + (userData.username || "ManagerUser");
+    try {
+      const pendingSnap = await getDocs(
+        query(collection(db, "journalEntries"), where("status", "==", "pending"))
+      );
+      const count = pendingSnap.size;
+      if (count > 0) {
+        document.getElementById("pendingAlert").style.display = "block";
+        document.getElementById("pendingCount").textContent   = count;
+        document.getElementById("navPendingBadge").style.display = "inline";
+        document.getElementById("navPendingBadge").textContent   = count;
+      }
+    } catch (_) { }
   });
 </script>
-
 </body>
 </html>

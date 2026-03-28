@@ -6,7 +6,6 @@
   <title>Accountant Dashboard</title>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
-
   <script>
     function openCalendar() {
       window.open(
@@ -15,7 +14,6 @@
         "width=500,height=550,left=100,top=100,resizable=yes,scrollbars=no"
       );
     }
-
     function openHelp() {
       window.open(
         "help.html",
@@ -26,18 +24,14 @@
   </script>
 </head>
 <body>
-
 <header class="header-bar">
   <img src="assets/logo.png" alt="Logo" width="120" title="Apex Accounts logo">
-
   <div class="top-services">
     <span onclick="openCalendar()" title="Open the calendar popup">Calendar</span>
     <span onclick="window.location.href='chartOfAccounts.html'" title="Open the Chart of Accounts module">Chart of Accounts</span>
-    <span onclick="window.location.href='journalizing.html'" title="Open the Journalizing module">Journalizing</span>
-    <!--<span onclick="window.location.href='ledger.html'" title="Open the Ledger module">Ledger</span> -->
+    <span onclick="window.location.href='journaling.html'" title="Open the Journaling module">Journaling</span>
     <span onclick="openHelp()" title="Open help information for the software">Help</span>
   </div>
-
   <div class="user-area">
     <span id="displayUsername">Username: </span>
     <a href="profile.html" title="Open your user profile">
@@ -46,44 +40,36 @@
     <a href="login.html" title="Log out of the system">Logout</a>
   </div>
 </header>
-
 <main>
   <h1>Accountant Dashboard</h1>
-
   <nav>
     <ul>
       <li><a href="chartOfAccounts.html" title="View the chart of accounts">View Chart of Accounts</a></li>
+      <li><a href="journaling.html" title="Create and view journal entries">Journaling</a></li>
       <li><a href="viewUsersReport.html" title="View reports available to manager">View Reports</a></li>
       <li><a href="expiredPasswordsReport.html" title="View users with expired passwords">Expired Passwords Report</a></li>
       <li><a href="sendEmail.html" title="Send an email from within the system">Send Email</a></li>
     </ul>
   </nav>
 </main>
-
 <script type="module">
   import { auth, db } from './firebase-config.js';
   import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
   import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
   onAuthStateChanged(auth, async (user) => {
     if (user) {
-      //getting logged in user information from database
       const docRef = doc(db, "users", user.uid);
       const docSnap = await getDoc(docRef);
-
       if (docSnap.exists()) {
         const userData = docSnap.data();
-        // update with their username
         document.getElementById('displayUsername').innerText = `Username: ${userData.username}`;
       } else {
         console.log("No user");
       }
     } else {
-      //if there is no one logged in
       window.location.href = "login.html";
     }
   });
 </script>
-
 </body>
 </html>

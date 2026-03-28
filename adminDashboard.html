@@ -6,7 +6,6 @@
   <title>Administrator Dashboard</title>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
-
   <script>
     function openCalendar() {
       window.open(
@@ -15,7 +14,6 @@
         "width=500,height=550,left=100,top=100,resizable=yes,scrollbars=no"
       );
     }
-
     function openHelp() {
       window.open(
         "help.html",
@@ -26,18 +24,14 @@
   </script>
 </head>
 <body>
-
 <header class="header-bar">
   <img src="assets/logo.png" alt="Logo" width="120" title="Apex Accounts logo">
-
   <div class="top-services">
     <span onclick="openCalendar()" title="Open the calendar popup">Calendar</span>
     <span onclick="window.location.href='chartOfAccounts.html'" title="Open the Chart of Accounts module">Chart of Accounts</span>
-    <span onclick="window.location.href='journalizing.html'" title="Open the Journalizing module">Journalizing</span>
     <!--<span onclick="window.location.href='ledger.html'" title="Open the Ledger module">Ledger</span> -->
     <span onclick="openHelp()" title="Open help information for the software">Help</span>
   </div>
-
   <div class="user-area">
     <span id="headerUsername">Username: AdminUser</span>
     <a href="profile.html" title="Open your user profile">
@@ -46,32 +40,26 @@
     <a href="login.html" onclick="localStorage.clear()" title="Log out of the system">Logout</a>
   </div>
 </header>
-
 <main>
   <h1>Administrator Dashboard</h1>
-
   <div style="margin: 30px 0; display: flex; gap: 50px;">
     <div title="Displays the total number of users in the system">
       <h3>Total Users</h3>
       <p id="totalUsers">0</p>
     </div>
-
     <div title="Displays the number of users waiting for approval">
       <h3>Pending Users</h3>
       <p id="pendingUsers">0</p>
     </div>
-
     <div title="Displays the number of approved users">
       <h3>Approved Users</h3>
       <p id="approvedUsers">0</p>
     </div>
-
     <div title="Displays the number of rejected users">
       <h3>Rejected Users</h3>
       <p id="rejectedUsers">0</p>
     </div>
   </div>
-
   <nav>
     <ul>
       <li><a href="createUser.html" title="Create a new user account">Create User</a></li>
@@ -86,60 +74,47 @@
     </ul>
   </nav>
 </main>
-
 <script type="module">
   import { auth, db } from "./firebase-config.js";
   import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
   import { collection, getDocs, query, where, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
   const totalUsersEl = document.getElementById("totalUsers");
   const pendingUsersEl = document.getElementById("pendingUsers");
   const approvedUsersEl = document.getElementById("approvedUsers");
   const rejectedUsersEl = document.getElementById("rejectedUsers");
-
   async function loadDashboardData() {
     const usersRef = collection(db, "users");
-
     const allUsersSnapshot = await getDocs(usersRef);
     totalUsersEl.textContent = allUsersSnapshot.size;
-
     const pendingQuery = query(usersRef, where("status", "==", "pending"));
     const pendingSnapshot = await getDocs(pendingQuery);
     pendingUsersEl.textContent = pendingSnapshot.size;
-
     const approvedQuery = query(usersRef, where("status", "==", "approved"));
     const approvedSnapshot = await getDocs(approvedQuery);
     approvedUsersEl.textContent = approvedSnapshot.size;
-
     const rejectedQuery = query(usersRef, where("status", "==", "rejected"));
     const rejectedSnapshot = await getDocs(rejectedQuery);
     rejectedUsersEl.textContent = rejectedSnapshot.size;
   }
-
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
       window.location.href = "login.html";
       return;
     }
-
     const userRef = doc(db, "users", user.uid);
     const userSnap = await getDoc(userRef);
-
     if (!userSnap.exists()) {
       window.location.href = "login.html";
       return;
     }
-
     const userData = userSnap.data();
     document.getElementById("headerUsername").textContent = "Username: " + (userData.username || userData.firstName || "Admin");
-    if (userData.role !== "administrator") { //role is administrator in firebase NOT admin
+    if (userData.role !== "administrator") {
       window.location.href = "accountantDashboard.html";
       return;
     }
-
     loadDashboardData();
   });
 </script>
-
 </body>
 </html>
