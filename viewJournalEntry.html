@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>View Journal Entry</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="header-bar">
+  <img src="assets/logo.png" alt="Logo" width="120">
+  <div class="top-services">
+    <span onclick="window.open('calendar.html','Cal','width=500,height=550')">Calendar</span>
+    <span onclick="location.href='chartOfAccounts.html'">Chart of Accounts</span>
+    <span onclick="location.href='journaling.html'">Journaling</span>
+    <span onclick="window.open('help.html','Help','width=700,height=600,scrollbars=yes')">Help</span>
+  </div>
+  <div class="user-area">
+    <span id="uname">Username: </span>
+    <a href="profile.html"><img id="avatar" src="assets/userAccountant.png" width="40" height="40" alt="Profile"></a>
+    <a href="login.html" onclick="localStorage.clear()">Logout</a>
+  </div>
+</header>
+
+<main>
+  <h1>Journal Entry</h1>
+  <p id="loadingMsg">Loading journal entry...</p>
+  <p id="errorMsg" style="display:none; color:red;"></p>
+
+  <div id="entryContent" style="display:none;">
+    <p><strong>Date:</strong> <span id="entryDate"></span></p>
+    <p><strong>Description:</strong> <span id="entryDescription"></span></p>
+    <p><strong>Reference:</strong> <span id="entryReference"></span></p>
+    <p><strong>Status:</strong> <span id="entryStatus"></span></p>
+    <p><strong>Submitted By:</strong> <span id="entryUser"></span></p>
+    <p><strong>Rejection Comment:</strong> <span id="entryComment"></span></p>
+
+    <h2>Lines</h2>
+    <table border="1" cellpadding="8" cellspacing="0" style="width:100%;">
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Account</th>
+          <th>Amount</th>
+        </tr>
+      </thead>
+      <tbody id="entryLines"></tbody>
+    </table>
+
+    <br>
+    <a href="journaling.html">Back to Journaling</a>
+  </div>
+</main>
+
+<script type="module">
+  import { auth, db } from './firebase-config.js';
+  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+  const entryId = new URLSearchParams(window.location.search).get('entryId');
+
+  function showError(msg) {
+    document.getElementById('loadingMsg').style.display = 'none';
+    const error = document.getElementById('errorMsg');
+    error.textContent = msg;
+    error.style.display = 'block';
+  }
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      window.location.href = 'login.html';
+      return;
+    }
+
+    const userSnap = await getDoc(doc(db, 'users', user.uid));
+    if (!userSnap.exists()) {
+      window.location.href = 'login.html';
+      return;
+    }
+
+    const userData = userSnap.data();
+    document.getElementById('uname').textContent = 'Username: ' + (userData.username || '');
+
+    const avatar = document.getElementById('avatar');
+    if (userData.role === 'administrator') avatar.src = 'assets/userAdmin.png';
+    else if (userData.role === 'manager') avatar.src = 'assets/userManager.png';
+
+    if (!entryId) {
+      showError('No journal entry specified.');
+      return;
+    }
+
+    try {
+      const entrySnap = await getDoc(doc(db, 'journalEntries', entryId));
+
+      if (!entrySnap.exists()) {
+        showError('Journal entry not found.');
+        return;
+      }
+
+      const entry = entrySnap.data();
+
+      document.getElementById('entryDate').textContent = entry.date || '—';
+      document.getElementById('entryDescription').textContent = entry.description || '—';
+      document.getElementById('entryReference').textContent = entry.reference || '—';
+      document.getElementById('entryStatus').textContent = entry.status || '—';
+      document.getElementById('entryUser').textContent = entry.submittedByUsername || '—';
+      document.getElementById('entryComment').textContent = entry.rejectionComment || '—';
+
+      document.getElementById('entryLines').innerHTML = (entry.lines || []).map(line => `
+        <tr>
+          <td>${line.type}</td>
+          <td>${line.accountName || line.accountId}</td>
+          <td>${Number(line.amount || 0).toFixed(2)}</td>
+        </tr>
+      `).join('');
+
+      document.getElementById('loadingMsg').style.display = 'none';
+      document.getElementById('entryContent').style.display = 'block';
+    } catch (err) {
+      showError('Failed to load journal entry: ' + err.message);
+    }
+  });
+</script>
+</body>
+</html>
