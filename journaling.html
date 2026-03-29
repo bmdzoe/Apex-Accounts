@@ -80,6 +80,7 @@
         <th>Status</th>
         <th>Submitted By</th>
         <th>Rejection Comment</th>
+        <th>View</th>
       </tr>
     </thead>
     <tbody id="eTbody"></tbody>
@@ -258,6 +259,7 @@
         <td>${e.status||'pending'}</td>
         <td>${e.submittedByUsername||'—'}</td>
         <td style="color:red">${e.rejectionComment||'—'}</td>
+        <td><a href="viewJournalEntry.html?entryId=${e.id}">View</a></td>
       </tr>`).join('');
   };
   window.clearF = () => {
