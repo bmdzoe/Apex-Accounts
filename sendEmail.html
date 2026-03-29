@@ -39,7 +39,7 @@
   </div>
 
   <div class="user-area">
-    <span>Username: AdminUser</span>
+    <span id="headerUsername">Username: </span>
     <a href="profile.html" title="Open your user profile">
       <img src="assets/userAdmin.png" alt="User Profile" width="40" height="40">
     </a>
@@ -65,9 +65,25 @@
     <textarea id="message" name="message" rows="8" required title="Enter the message to send"></textarea><br><br>
 
     <button type="submit" title="Send this email message">Send</button>
-    <a href="adminDashboard.html" title="Cancel and return to the administrator dashboard">Cancel</a>
+    <a href="#" onclick="goToDashboard()" title="Cancel and return to dashboard">Cancel</a>
   </form>
 </main>
+
+</main>
+
+<script>
+  function goToDashboard() {
+    const userRole = localStorage.getItem('role');
+    if (userRole === 'administrator') window.location.href = 'adminDashboard.html';
+    else if (userRole === 'manager') window.location.href = 'managerDashboard.html';
+    else window.location.href = 'accountantDashboard.html';
+  }
+
+  const storedUsername = localStorage.getItem('username');
+  if (storedUsername) document.getElementById('headerUsername').textContent = 'Username: ' + storedUsername;
+</script>
+
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 <script type="text/javascript">
@@ -76,10 +92,13 @@
   })();
 
   const sendEmail = (emailData) => {
-    emailjs.send("service_nnjzk4j", "template_r50wjct", {
-      recipientEmail: emailData.recipient,
-      subject: emailData.subject,
-      message: emailData.message
+ emailjs.send("service_nnjzk4j", "template_r50wjct", {
+    recipientEmail: emailData.recipient,
+    subject: emailData.subject,
+    message: emailData.message,
+    name: localStorage.getItem('username') || 'Apex Accounts User',
+    time: new Date().toLocaleString(),
+    email: emailData.recipient
     }).then(() => {
       alert("Email sent successfully!");
     }, (error) => {

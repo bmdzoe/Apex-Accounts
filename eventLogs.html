@@ -24,7 +24,7 @@
   <div class="top-services">
     <span onclick="openCalendar()" title="Open the calendar popup">Calendar</span>
     <span onclick="window.location.href='chartOfAccounts.html'" title="Open the Chart of Accounts module">Chart of Accounts</span>
-    <span onclick="window.location.href='journalizing.html'" title="Open the Journalizing module">Journalizing</span>
+    <span onclick="window.location.href='journaling.html'" title="Open the Journalizing module">Journaling</span>
     <span onclick="window.location.href='ledger.html'" title="Open the Ledger module">Ledger</span>
     <span onclick="openHelp()" title="Open help information for the software">Help</span>
   </div>
@@ -59,8 +59,23 @@
   </div>
 
   <br>
-  <a href="adminDashboard.html" title="Return to dashboard">Back to Dashboard</a>
+  <a href="#" onclick="goToDashboard()" title="Return to dashboard">Back to Dashboard</a>
 </main>
+
+</main>
+
+<script>
+  function goToDashboard() {
+    const userRole = localStorage.getItem('role');
+    if (userRole === 'administrator') {
+      window.location.href = 'adminDashboard.html';
+    } else if (userRole === 'manager') {
+      window.location.href = 'managerDashboard.html';
+    } else {
+      window.location.href = 'accountantDashboard.html';
+    }
+  }
+</script>
 
 <script type="module">
   import { db } from './firebase-config.js';

@@ -16,6 +16,7 @@
 <main>
   <h1>Security Questions</h1>
   <p>Please answer your security questions to continue.</p>
+  <div id="msgBox" style="display:none; margin-bottom:10px;"></div>
 
   <form id="securityForm">
     <label>Security Question</label><br>
@@ -25,13 +26,14 @@
     <input type="text" id="a1" name="a1" required title="Enter the answer to your security question"><br><br>
 
     <button type="submit" title="Verify your answer and continue to password reset">Verify</button>
-    <a href="resetPassword.html" title="Cancel security question verification">Cancel</a>
+   <a href="login.html" title="Cancel and return to login">Cancel</a>
   </form>
 </main>
 
 <script type="module">
   import { auth, db } from './firebase-config.js';
   import {doc, getDoc} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+  import { sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
   const security = document.getElementById("securityForm");
   const id = sessionStorage.getItem("resetId");
@@ -51,8 +53,18 @@
           const userData = userSnap.data();
           document.getElementById("q1").value = userData.securityQuestion; // change security question to user question
 
-          if (answer === userData.securityAnswer) {
-            window.location.href = "resetPassword.html";
+          if (answer.toLowerCase() === userData.securityAnswer.toLowerCase()) {
+    try {
+        await sendPasswordResetEmail(auth, email);
+        const msgBox = document.getElementById("msgBox");
+        msgBox.style.color = "green";
+        msgBox.textContent = "✓ Identity verified! A password reset link has been sent to " + email;
+        msgBox.style.display = "block";
+        security.querySelector("button[type='submit']").disabled = true;
+    } catch (err) {
+        alert("Failed to send reset email: " + err.message);
+    }
+
           } else {
             alert("This answer is not correct. Please try again.");
           }
