@@ -41,7 +41,14 @@
 
   if(!email || !id){ // if user tries to manually enter this page, redirect to proper page
     window.location.href = "forgotPassword.html";
-  } else {
+} else {
+    // loads the correct question on page load, not after the answer is submitted
+    const userSnap = await getDoc(doc(db, "users", id));
+    if (userSnap.exists()) {
+      const userData = userSnap.data();
+      document.getElementById("q1").value = userData.securityQuestion;
+    }
+
     security.addEventListener('submit', async(e) => {
       e.preventDefault();
     
@@ -51,7 +58,6 @@
 
         if(userSnap.exists()) {
           const userData = userSnap.data();
-          document.getElementById("q1").value = userData.securityQuestion; // change security question to user question
 
           if (answer.toLowerCase() === userData.securityAnswer.toLowerCase()) {
     try {
