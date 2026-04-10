@@ -91,12 +91,14 @@
 <script type="module">
   import { auth, db } from './firebase-config.js';
   import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-  import { collection, getDocs, addDoc, doc, getDoc, query, where, orderBy, serverTimestamp }
+  import { collection, getDocs, addDoc, doc, getDoc, query, where, orderBy, documentId, serverTimestamp }
     from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
   import { getStorage, ref, uploadBytes, getDownloadURL }
     from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+
   let uid, uname, role, accounts = [], attachments = [], allEntries = [];
-  const fmt = v => new Intl.NumberFormat('en-US', { style:'currency', currency:'USD', minimumFractionDigits:2 }).format(v);
+  const fmt = v => new Intl.NumberFormat('en-US', { style:'currency', currency:'USD', minimumFractionDigits:2 }).format(v); 
+
   onAuthStateChanged(auth, async user => {
     if (!user) return location.href = 'login.html';
     uid = user.uid;
@@ -112,6 +114,7 @@
     addLine('debit'); addLine('credit');
     loadEntries();
   });
+
   const acctOpts = () => '<option value="">— Select account —</option>' +
     accounts.map(a => `<option value="${a.id}" data-name="${a.accountName}">${a.accountNumber} — ${a.accountName}</option>`).join('');
   window.addLine = type => {
@@ -125,11 +128,13 @@
     document.getElementById(type === 'debit' ? 'debitLines' : 'creditLines').appendChild(div);
     recalc();
   };
-  window.rmLine = (id, type) => {
+
+  window.rmLine = async (id, type) => {
     const cont = document.getElementById(type === 'debit' ? 'debitLines' : 'creditLines');
-    if (cont.children.length <= 1) return showErr('Need at least one ' + type + ' line.');
+    if (cont.children.length <= 1) return showErr(await pullError(1, 'type') + ' Need at least one ' + type + ' line.');
     document.getElementById(id).remove(); recalc();
   };
+
   window.recalc = () => {
     const sum = t => [...document.querySelectorAll(`[data-t="${t}"]`)].reduce((s, i) => s + (parseFloat(i.value) || 0), 0);
     const d = sum('debit'), c = sum('credit'), diff = Math.abs(d - c);
@@ -139,11 +144,13 @@
     el.textContent = d > 0 && diff < .005 ? '✓ Balanced.' : d === 0 ? '⚠ Enter amounts.' : `⚠ Off by ${fmt(diff)}`;
     el.style.color = diff < .005 && d > 0 ? 'green' : 'red';
   };
+
   const allowed = ['pdf','doc','docx','xls','xlsx','csv','jpg','jpeg','png'];
-  window.addFiles = e => {
+  window.addFiles = async (e) => {
+    const er = await pullError(2, 'type');
     [...e.target.files].forEach(f => {
       const ext = f.name.split('.').pop().toLowerCase();
-      if (!allowed.includes(ext)) return showErr(`.${ext} not allowed.`);
+      if (!allowed.includes(ext)) return showErr(er + ` .${ext} not allowed.`);
       const idx = attachments.length;
       attachments.push(f);
       const d = document.createElement('div');
@@ -153,11 +160,12 @@
     });
     e.target.value = '';
   };
+
   window.rmFile = idx => { attachments[idx] = null; document.getElementById('f' + idx)?.remove(); };
   window.submitEntry = async () => {
     hideMsg();
     const date = document.getElementById('jeDate').value;
-    if (!date) return showErr('Date is required.');
+    if (!date) return showErr(await pullError(3, 'type') + ' Date is required.');
     const lines = [];
     for (const type of ['debit', 'credit']) {
       document.querySelectorAll(`#${type}Lines [data-t]`).forEach(inp => {
@@ -179,7 +187,7 @@
     document.getElementById('lineErr').style.display = 'none';
     const tD = debits.reduce((s, l) => s + l.amount, 0);
     const tC = credits.reduce((s, l) => s + l.amount, 0);
-    if (Math.abs(tD - tC) >= .005) return showErr(`Debits (${fmt(tD)}) ≠ Credits (${fmt(tC)}). Difference: ${fmt(Math.abs(tD - tC))}`);
+    if (Math.abs(tD - tC) >= .005) return showErr(await pullError(4, 'type') + ` Debits (${fmt(tD)}) ≠ Credits (${fmt(tC)}). Difference: ${fmt(Math.abs(tD - tC))}`);
     const btn = document.getElementById('submitBtn');
     btn.disabled = true; btn.textContent = 'Submitting…';
     try {
@@ -208,9 +216,10 @@
       showSuccess('✓ Submitted — pending manager approval.');
       resetFormFields();
       loadEntries();
-    } catch (e) { showErr('Submission failed: ' + e.message); }
+    } catch (e) { showErr(await pullError(5, 'type') + ' Submission failed: ' + e.message); }
     finally { btn.disabled = false; btn.textContent = 'Submit for Approval'; }
   };
+
   window.resetForm = () => { if (confirm('Reset form?')) resetFormFields(); };
   function resetFormFields() {
     document.getElementById('jeDate').valueAsDate = new Date();
@@ -221,11 +230,13 @@
     attachments = [];
     addLine('debit'); addLine('credit'); recalc();
   }
+
   window.goBack = e => {
     e.preventDefault();
     if (confirm('Go back to dashboard?'))
       location.href = role === 'manager' ? 'managerDashboard.html' : 'accountantDashboard.html';
   };
+
   async function loadEntries() {
     try {
       allEntries = (await getDocs(query(collection(db, 'journalEntries'), orderBy('createdAt', 'desc'))))
@@ -262,19 +273,33 @@
         <td><a href="viewJournalEntry.html?entryId=${e.id}">View</a></td>
       </tr>`).join('');
   };
+
   window.clearF = () => {
     ['srch','fFrom','fTo'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('fStat').value = ''; filter();
   };
+
   function showErr(msg) {
     const el = document.getElementById('msg');
     el.textContent = msg; el.style.color = 'red'; el.style.display = 'block';
   }
+
+  async function pullError(id, field) { // Pull field data from error collection
+    try {
+      const querySnap = await getDocs(query(collection(db, 'errors'), where(documentId(), '==', `${id}`)));
+      const error = querySnap.docs[0].data();
+      return error[field];
+    } catch(e) {
+      return e.message;
+    }
+  }
+
   function showSuccess(msg) {
     const el = document.getElementById('msg');
     el.textContent = msg; el.style.color = 'green'; el.style.display = 'block';
     setTimeout(() => el.style.display = 'none', 6000);
   }
+
   function hideMsg() { document.getElementById('msg').style.display = 'none'; }
 </script>
 </body>
