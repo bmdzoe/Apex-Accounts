@@ -250,7 +250,12 @@ title="Send an email to a manager or accountant user">Send Email
         </button>` : '';
       return `
         <tr>
-          <td>${a.accountNumber || ''}</td>
+          <td>
+            <a href="ledger.html?accountId=${a.id}"
+              title="View the ledger for ${a.accountNumber} — ${a.accountName} (Spec #11)">
+              ${a.accountNumber || ''}
+            </a>
+          </td>
           <td>
             <a href="ledger.html?accountId=${a.id}"
               title="View the ledger for ${a.accountNumber} — ${a.accountName} (Spec #11)">
