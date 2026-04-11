@@ -10,12 +10,17 @@
     function openCalendar() {
       window.open("calendar.html", "CalendarPopup", "width=500,height=550,left=100,top=100,resizable=yes,scrollbars=no");
     }
+
     function openHelp() {
       window.open("help.html", "HelpPopup", "width=700,height=600,left=120,top=80,resizable=yes,scrollbars=yes");
     }
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-  <script>(function () { emailjs.init("cC6e6ZNLke2V3BRfU"); })();</script>
+  <script>
+    (function () {
+      emailjs.init("cC6e6ZNLke2V3BRfU");
+    })();
+  </script>
 </head>
 <body>
 <header class="header-bar">
@@ -34,50 +39,45 @@
     <a href="login.html" onclick="localStorage.clear()" title="Log out of the system">Logout</a>
   </div>
 </header>
+
 <main>
   <h1>Balance Sheet</h1>
 
   <fieldset>
-    <legend>Report Period</legend>
-    <label for="dateFrom">From Date *</label><br>
-    <input type="date" id="dateFrom" required
-      title="Select the start date for the balance sheet reporting period"><br><br>
-    <label for="dateTo">To Date *</label><br>
-    <input type="date" id="dateTo" required
-      title="Select the end date for the balance sheet reporting period"><br><br>
+    <legend>Report Date</legend>
+    <label for="reportDate">As of Date *</label><br>
+    <input type="date" id="reportDate" required title="Select the date for the balance sheet"><br><br>
+
     <p id="dateError" style="color:red; display:none;"></p>
-    <button onclick="generateReport()"
-      title="Generate the balance sheet for the selected date range">
-      Generate Report
-    </button>
+    <button onclick="generateReport()" title="Generate the balance sheet for the selected date">Generate Report</button>
   </fieldset>
 
   <br>
-  <p id="loadingMsg" style="display:none;">Generating report…</p>
-  <p id="reportError" style="color:red; display:none;"></p>
+  <p id="loadingMsg" style="display:none;">Generating report...</p>
+  <p id="reportError" style="display:none; color:red;"></p>
 
   <div id="reportOutput" style="display:none;">
     <h2>Apex Accounts</h2>
     <h3>Balance Sheet</h3>
     <p id="reportPeriodLabel"></p>
     <p id="reportGeneratedLabel" style="font-size:12px;"></p>
+
     <br>
 
-    <table border="1" cellpadding="8" cellspacing="0" style="width:100%; max-width:760px;"
-      title="Asset accounts for the selected period">
+    <table border="1" cellpadding="8" cellspacing="0" style="width:100%; max-width:760px;">
       <thead>
-        <tr><th colspan="3">Assets</th></tr>
         <tr>
-          <th title="Account number and name">Account</th>
-          <th style="text-align:right;" title="Change during the selected period">Period Change</th>
-          <th style="text-align:right;" title="Ending balance as of the selected end date">Ending Balance</th>
+          <th colspan="2">Assets</th>
+        </tr>
+        <tr>
+          <th>Account</th>
+          <th style="text-align:right;">Amount</th>
         </tr>
       </thead>
-      <tbody id="assetBody"></tbody>
+      <tbody id="assetsBody"></tbody>
       <tfoot>
         <tr>
           <td><strong>Total Assets</strong></td>
-          <td></td>
           <td style="text-align:right;"><strong id="totalAssets">$0.00</strong></td>
         </tr>
       </tfoot>
@@ -85,21 +85,20 @@
 
     <br>
 
-    <table border="1" cellpadding="8" cellspacing="0" style="width:100%; max-width:760px;"
-      title="Liability accounts for the selected period">
+    <table border="1" cellpadding="8" cellspacing="0" style="width:100%; max-width:760px;">
       <thead>
-        <tr><th colspan="3">Liabilities</th></tr>
         <tr>
-          <th title="Account number and name">Account</th>
-          <th style="text-align:right;" title="Change during the selected period">Period Change</th>
-          <th style="text-align:right;" title="Ending balance as of the selected end date">Ending Balance</th>
+          <th colspan="2">Liabilities</th>
+        </tr>
+        <tr>
+          <th>Account</th>
+          <th style="text-align:right;">Amount</th>
         </tr>
       </thead>
-      <tbody id="liabilityBody"></tbody>
+      <tbody id="liabilitiesBody"></tbody>
       <tfoot>
         <tr>
           <td><strong>Total Liabilities</strong></td>
-          <td></td>
           <td style="text-align:right;"><strong id="totalLiabilities">$0.00</strong></td>
         </tr>
       </tfoot>
@@ -107,21 +106,20 @@
 
     <br>
 
-    <table border="1" cellpadding="8" cellspacing="0" style="width:100%; max-width:760px;"
-      title="Equity accounts for the selected period">
+    <table border="1" cellpadding="8" cellspacing="0" style="width:100%; max-width:760px;">
       <thead>
-        <tr><th colspan="3">Equity</th></tr>
         <tr>
-          <th title="Account number and name">Account</th>
-          <th style="text-align:right;" title="Change during the selected period">Period Change</th>
-          <th style="text-align:right;" title="Ending balance as of the selected end date">Ending Balance</th>
+          <th colspan="2">Equity</th>
+        </tr>
+        <tr>
+          <th>Account</th>
+          <th style="text-align:right;">Amount</th>
         </tr>
       </thead>
       <tbody id="equityBody"></tbody>
       <tfoot>
         <tr>
           <td><strong>Total Equity</strong></td>
-          <td></td>
           <td style="text-align:right;"><strong id="totalEquity">$0.00</strong></td>
         </tr>
       </tfoot>
@@ -129,35 +127,10 @@
 
     <br>
 
-    <table border="1" cellpadding="8" cellspacing="0" style="width:100%; max-width:760px;"
-      title="Balance check for the balance sheet">
-      <tbody>
-        <tr>
-          <td><strong>Total Liabilities + Equity</strong></td>
-          <td style="text-align:right;"><strong id="totalLiabilitiesEquity">$0.00</strong></td>
-        </tr>
-        <tr>
-          <td><strong>Difference</strong></td>
-          <td style="text-align:right;"><strong id="balanceDifference">$0.00</strong></td>
-        </tr>
-      </tbody>
-    </table>
-
-    <br>
-
     <div style="display:flex; gap:10px; flex-wrap:wrap;">
-      <button onclick="window.print()"
-        title="Print the balance sheet using your browser's print dialog">
-        Print
-      </button>
-      <button onclick="saveCSV()"
-        title="Save the balance sheet as a CSV file to your computer">
-        Save (CSV)
-      </button>
-      <button onclick="openEmailDialog()"
-        title="Email the balance sheet to a recipient">
-        Email Report
-      </button>
+      <button onclick="window.print()" title="Print the balance sheet">Print</button>
+      <button onclick="saveCSV()" title="Save the balance sheet as CSV">Save (CSV)</button>
+      <button onclick="openEmailDialog()" title="Email the balance sheet">Email Report</button>
     </div>
   </div>
 
@@ -167,117 +140,105 @@
 
 <dialog id="emailDialog">
   <h3>Email Balance Sheet</h3>
+
   <label for="emailTo">Recipient Email *</label><br>
-  <input type="email" id="emailTo" placeholder="recipient@example.com"
-    title="Enter the recipient's email address"><br><br>
+  <input type="email" id="emailTo" placeholder="recipient@example.com" title="Enter the recipient's email address"><br><br>
+
   <label for="emailSubject">Subject</label><br>
-  <input type="text" id="emailSubject"
-    title="Enter the email subject line"><br><br>
+  <input type="text" id="emailSubject" title="Enter the email subject line"><br><br>
+
   <label for="emailMessage">Message</label><br>
-  <textarea id="emailMessage" rows="5" cols="50"
-    title="Enter an optional message to include with the report"></textarea><br><br>
+  <textarea id="emailMessage" rows="6" cols="50" title="Enter an optional message to include with the report"></textarea><br><br>
+
   <p id="emailError" style="color:red; display:none;"></p>
   <p id="emailSuccess" style="color:green; display:none;"></p>
+
   <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:8px;">
-    <button onclick="document.getElementById('emailDialog').close()"
-      title="Cancel and close the email dialog">Cancel</button>
-    <button id="sendEmailBtn" onclick="sendEmail()"
-      title="Send the balance sheet report via email">Send</button>
+    <button onclick="document.getElementById('emailDialog').close()" title="Cancel and close the email dialog">Cancel</button>
+    <button id="sendEmailBtn" onclick="sendEmail()" title="Send the balance sheet report">Send</button>
   </div>
 </dialog>
 
 <script type="module">
   import { auth, db } from './firebase-config.js';
   import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-  import {
-    collection, getDocs, doc, getDoc, addDoc, query, where, serverTimestamp
-  } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+  import { collection, getDocs, doc, getDoc, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
   let currentUser = null;
   let reportData = null;
 
-  const fmtMoney = v => new Intl.NumberFormat('en-US', {
+  const fmtMoney = (v) => new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
-  }).format(v);
+  }).format(Number(v || 0));
 
-  const rawMoney = v => Number(v || 0).toFixed(2);
-
-  const fmtDate = iso => new Date(iso + 'T00:00:00').toLocaleDateString('en-US', {
-    year: 'numeric', month: 'long', day: 'numeric'
+  const fmtDate = (iso) => new Date(iso + 'T00:00:00').toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
   });
 
-  function signedAmountText(v) {
-    const n = Number(v || 0);
-    return `${n >= 0 ? '+' : '-'}${fmtMoney(Math.abs(n))}`;
-  }
-
-  function computeEndingBalance(account) {
-    const initial = Number(account.initialBalance || 0);
-    const debits  = Number(account.totalDebit || 0);
-    const credits = Number(account.totalCredit || 0);
-
-    if (account.accountCategory === 'Asset') {
-      return parseFloat((initial + debits - credits).toFixed(2));
-    }
-
-    return parseFloat((initial + credits - debits).toFixed(2));
-  }
-
-  function computePeriodChange(account) {
-    const debits  = Number(account.periodDebit || 0);
-    const credits = Number(account.periodCredit || 0);
-
-    if (account.accountCategory === 'Asset') {
-      return parseFloat((debits - credits).toFixed(2));
-    }
-
-    return parseFloat((credits - debits).toFixed(2));
-  }
+  const round2 = (n) => parseFloat(Number(n || 0).toFixed(2));
 
   onAuthStateChanged(auth, async (user) => {
-    if (!user) { window.location.href = 'login.html'; return; }
+    if (!user) {
+      window.location.href = 'login.html';
+      return;
+    }
+
     currentUser = user;
 
     const snap = await getDoc(doc(db, 'users', user.uid));
-    if (!snap.exists()) { window.location.href = 'login.html'; return; }
+    if (!snap.exists()) {
+      window.location.href = 'login.html';
+      return;
+    }
 
     const ud = snap.data();
     document.getElementById('headerUsername').textContent = 'Username: ' + (ud.username || '');
 
-    const av = document.getElementById('userAvatar');
-    if (ud.role === 'administrator') av.src = 'assets/userAdmin.png';
-    else if (ud.role === 'accountant') av.src = 'assets/userAccountant.png';
+    const avatar = document.getElementById('userAvatar');
+    if (ud.role === 'administrator') avatar.src = 'assets/userAdmin.png';
+    else if (ud.role === 'accountant') avatar.src = 'assets/userAccountant.png';
 
     const backLink = document.getElementById('backLink');
     if (ud.role === 'administrator') backLink.href = 'adminDashboard.html';
     else if (ud.role === 'manager') backLink.href = 'managerDashboard.html';
     else backLink.href = 'accountantDashboard.html';
 
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    document.getElementById('dateFrom').value = `${year}-${month}-01`;
-    document.getElementById('dateTo').value = now.toISOString().split('T')[0];
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('reportDate').value = today;
     document.getElementById('emailSubject').value = 'Balance Sheet – Apex Accounts';
   });
 
-  window.generateReport = async function () {
-    const dateFrom = document.getElementById('dateFrom').value;
-    const dateTo = document.getElementById('dateTo').value;
-    const dateErr = document.getElementById('dateError');
-    dateErr.style.display = 'none';
+  function renderRows(rows, tbodyId, emptyLabel) {
+    const tbody = document.getElementById(tbodyId);
+    tbody.innerHTML = '';
 
-    if (!dateFrom || !dateTo) {
-      dateErr.textContent = 'Please select both a start and end date.';
-      dateErr.style.display = 'block';
+    if (!rows.length) {
+      tbody.innerHTML = `<tr><td colspan="2"><em>No ${emptyLabel} found.</em></td></tr>`;
       return;
     }
 
-    if (dateTo < dateFrom) {
-      dateErr.textContent = 'End date must be on or after the start date.';
+    rows.forEach((row) => {
+      tbody.innerHTML += `
+        <tr>
+          <td>${row.accountNumber || ''} — ${row.accountName || ''}</td>
+          <td style="text-align:right;">${fmtMoney(row.reportBalance)}</td>
+        </tr>`;
+    });
+  }
+
+  window.generateReport = async function () {
+    const reportDate = document.getElementById('reportDate').value;
+    const dateErr = document.getElementById('dateError');
+
+    dateErr.style.display = 'none';
+
+    if (!reportDate) {
+      dateErr.textContent = 'Please select a report date.';
       dateErr.style.display = 'block';
       return;
     }
@@ -290,14 +251,12 @@
       const acctSnap = await getDocs(collection(db, 'accounts'));
       const accounts = {};
 
-      acctSnap.docs.forEach(d => {
+      acctSnap.docs.forEach((d) => {
         const a = d.data();
         if (['Asset', 'Liability', 'Equity'].includes(a.accountCategory)) {
           accounts[d.id] = {
             ...a,
             id: d.id,
-            totalDebit: 0,
-            totalCredit: 0,
             periodDebit: 0,
             periodCredit: 0
           };
@@ -305,26 +264,24 @@
       });
 
       const entriesSnap = await getDocs(
-        query(collection(db, 'journalEntries'),
-          where('status', '==', 'approved'),
-          where('date', '<=', dateTo))
+        query(
+          collection(db, 'journalEntries'),
+          where('status', '==', 'approved')
+        )
       );
 
-      entriesSnap.docs.forEach(d => {
+      entriesSnap.docs.forEach((d) => {
         const entry = d.data();
-        const entryDate = entry.date || '';
-        (entry.lines || []).forEach(line => {
-          const acct = accounts[line.accountId];
-          if (!acct) return;
+
+        if (!entry.date || entry.date > reportDate) return;
+
+        (entry.lines || []).forEach((line) => {
+          if (!accounts[line.accountId]) return;
 
           const amt = Number(line.amount || 0);
-          if (line.type === 'debit') acct.totalDebit += amt;
-          if (line.type === 'credit') acct.totalCredit += amt;
 
-          if (entryDate >= dateFrom && entryDate <= dateTo) {
-            if (line.type === 'debit') acct.periodDebit += amt;
-            if (line.type === 'credit') acct.periodCredit += amt;
-          }
+          if (line.type === 'debit') accounts[line.accountId].periodDebit += amt;
+          if (line.type === 'credit') accounts[line.accountId].periodCredit += amt;
         });
       });
 
@@ -332,14 +289,22 @@
       const liabilities = [];
       const equity = [];
 
-      Object.values(accounts).forEach(a => {
-        const endingBalance = computeEndingBalance(a);
-        const periodChange = computePeriodChange(a);
-        const row = { ...a, endingBalance, periodChange };
+      Object.values(accounts).forEach((a) => {
+        const opening = Number(a.initialBalance || 0);
+        let balance = 0;
 
-        if (a.accountCategory === 'Asset') assets.push(row);
-        else if (a.accountCategory === 'Liability') liabilities.push(row);
-        else equity.push(row);
+        if (a.accountCategory === 'Asset') {
+          balance = round2(opening + a.periodDebit - a.periodCredit);
+          assets.push({ ...a, reportBalance: balance });
+        } else {
+          balance = round2(opening + a.periodCredit - a.periodDebit);
+
+          if (a.accountCategory === 'Liability') {
+            liabilities.push({ ...a, reportBalance: balance });
+          } else if (a.accountCategory === 'Equity') {
+            equity.push({ ...a, reportBalance: balance });
+          }
+        }
       });
 
       const byNumber = (a, b) => (a.accountNumber || '').localeCompare(b.accountNumber || '');
@@ -347,120 +312,77 @@
       liabilities.sort(byNumber);
       equity.sort(byNumber);
 
-      const totalAssets = parseFloat(assets.reduce((s, a) => s + a.endingBalance, 0).toFixed(2));
-      const totalLiabilities = parseFloat(liabilities.reduce((s, a) => s + a.endingBalance, 0).toFixed(2));
-      const totalEquity = parseFloat(equity.reduce((s, a) => s + a.endingBalance, 0).toFixed(2));
-      const totalLiabilitiesEquity = parseFloat((totalLiabilities + totalEquity).toFixed(2));
-      const difference = parseFloat((totalAssets - totalLiabilitiesEquity).toFixed(2));
+      const totalAssets = round2(assets.reduce((sum, a) => sum + Number(a.reportBalance || 0), 0));
+      const totalLiabilities = round2(liabilities.reduce((sum, a) => sum + Number(a.reportBalance || 0), 0));
+      const totalEquity = round2(equity.reduce((sum, a) => sum + Number(a.reportBalance || 0), 0));
 
       reportData = {
-        dateFrom,
-        dateTo,
+        reportDate,
         assets,
         liabilities,
         equity,
         totalAssets,
         totalLiabilities,
-        totalEquity,
-        totalLiabilitiesEquity,
-        difference
+        totalEquity
       };
 
-      document.getElementById('reportPeriodLabel').textContent =
-        `For the period: ${fmtDate(dateFrom)} – ${fmtDate(dateTo)}`;
+      document.getElementById('reportPeriodLabel').textContent = `As of ${fmtDate(reportDate)}`;
       document.getElementById('reportGeneratedLabel').textContent =
         `Generated: ${new Date().toLocaleString()} · ${document.getElementById('headerUsername').textContent}`;
 
-      const renderRows = (arr, tbodyId) => {
-        const tbody = document.getElementById(tbodyId);
-        tbody.innerHTML = '';
-        if (!arr.length) {
-          tbody.innerHTML = '<tr><td colspan="3"><em>No accounts for this period.</em></td></tr>';
-          return;
-        }
-        arr.forEach(a => {
-          tbody.innerHTML += `
-            <tr>
-              <td>${a.accountNumber || ''} — ${a.accountName || ''}</td>
-              <td style="text-align:right;">${signedAmountText(a.periodChange)}</td>
-              <td style="text-align:right;">${fmtMoney(a.endingBalance)}</td>
-            </tr>`;
-        });
-      };
-
-      renderRows(assets, 'assetBody');
-      renderRows(liabilities, 'liabilityBody');
-      renderRows(equity, 'equityBody');
+      renderRows(assets, 'assetsBody', 'asset accounts');
+      renderRows(liabilities, 'liabilitiesBody', 'liability accounts');
+      renderRows(equity, 'equityBody', 'equity accounts');
 
       document.getElementById('totalAssets').textContent = fmtMoney(totalAssets);
       document.getElementById('totalLiabilities').textContent = fmtMoney(totalLiabilities);
       document.getElementById('totalEquity').textContent = fmtMoney(totalEquity);
-      document.getElementById('totalLiabilitiesEquity').textContent = fmtMoney(totalLiabilitiesEquity);
-      document.getElementById('balanceDifference').textContent = fmtMoney(difference);
-      document.getElementById('balanceDifference').style.color = difference === 0 ? 'green' : 'red';
 
-      document.getElementById('emailSubject').value =
-        `Balance Sheet: ${fmtDate(dateFrom)} – ${fmtDate(dateTo)}`;
+      document.getElementById('emailSubject').value = `Balance Sheet: ${fmtDate(reportDate)}`;
       document.getElementById('emailMessage').value =
-        `Balance Sheet for ${fmtDate(dateFrom)} – ${fmtDate(dateTo)}\n\nTotal Assets: ${fmtMoney(totalAssets)}\nTotal Liabilities: ${fmtMoney(totalLiabilities)}\nTotal Equity: ${fmtMoney(totalEquity)}\nTotal Liabilities + Equity: ${fmtMoney(totalLiabilitiesEquity)}\nDifference: ${fmtMoney(difference)}`;
-
-      await addDoc(collection(db, 'savedReports'), {
-        reportType: 'Balance Sheet',
-        dateFrom,
-        dateTo,
-        totalAssets,
-        totalLiabilities,
-        totalEquity,
-        totalLiabilitiesEquity,
-        difference,
-        generatedBy: currentUser.uid,
-        generatedAt: serverTimestamp(),
-      });
+        `Balance Sheet as of ${fmtDate(reportDate)}\n\n` +
+        `Total Assets: ${fmtMoney(totalAssets)}\n` +
+        `Total Liabilities: ${fmtMoney(totalLiabilities)}\n` +
+        `Total Equity: ${fmtMoney(totalEquity)}`;
 
       document.getElementById('loadingMsg').style.display = 'none';
       document.getElementById('reportOutput').style.display = 'block';
     } catch (err) {
       document.getElementById('loadingMsg').style.display = 'none';
-      const el = document.getElementById('reportError');
-      el.textContent = 'Failed to generate report: ' + err.message;
-      el.style.display = 'block';
+      const errorEl = document.getElementById('reportError');
+      errorEl.textContent = 'Failed to generate report: ' + err.message;
+      errorEl.style.display = 'block';
     }
   };
 
   window.saveCSV = function () {
     if (!reportData) return;
 
+    const raw = (v) => Number(v || 0).toFixed(2);
     const rows = [
       ['Apex Accounts — Balance Sheet'],
-      [`Period: ${reportData.dateFrom} to ${reportData.dateTo}`],
+      [`As of ${reportData.reportDate}`],
       [`Generated: ${new Date().toLocaleString()}`],
       [],
-      ['Section', 'Account Number', 'Account Name', 'Period Change', 'Ending Balance']
+      ['Section', 'Account Number', 'Account Name', 'Amount']
     ];
 
-    reportData.assets.forEach(a =>
-      rows.push(['Asset', a.accountNumber || '', a.accountName || '', rawMoney(a.periodChange), rawMoney(a.endingBalance)]));
-    rows.push(['', '', 'Total Assets', '', rawMoney(reportData.totalAssets)]);
+    reportData.assets.forEach((a) => rows.push(['Asset', a.accountNumber || '', a.accountName || '', raw(a.reportBalance)]));
+    rows.push(['', '', 'Total Assets', raw(reportData.totalAssets)]);
     rows.push([]);
 
-    reportData.liabilities.forEach(a =>
-      rows.push(['Liability', a.accountNumber || '', a.accountName || '', rawMoney(a.periodChange), rawMoney(a.endingBalance)]));
-    rows.push(['', '', 'Total Liabilities', '', rawMoney(reportData.totalLiabilities)]);
+    reportData.liabilities.forEach((a) => rows.push(['Liability', a.accountNumber || '', a.accountName || '', raw(a.reportBalance)]));
+    rows.push(['', '', 'Total Liabilities', raw(reportData.totalLiabilities)]);
     rows.push([]);
 
-    reportData.equity.forEach(a =>
-      rows.push(['Equity', a.accountNumber || '', a.accountName || '', rawMoney(a.periodChange), rawMoney(a.endingBalance)]));
-    rows.push(['', '', 'Total Equity', '', rawMoney(reportData.totalEquity)]);
-    rows.push([]);
+    reportData.equity.forEach((a) => rows.push(['Equity', a.accountNumber || '', a.accountName || '', raw(a.reportBalance)]));
+    rows.push(['', '', 'Total Equity', raw(reportData.totalEquity)]);
 
-    rows.push(['', '', 'Total Liabilities + Equity', '', rawMoney(reportData.totalLiabilitiesEquity)]);
-    rows.push(['', '', 'Difference', '', rawMoney(reportData.difference)]);
-
-    const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const csv = rows.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `balance-sheet-${reportData.dateFrom}-to-${reportData.dateTo}.csv`;
+    link.download = `balance-sheet-${reportData.reportDate}.csv`;
     link.click();
   };
 
@@ -474,6 +396,7 @@
     const to = document.getElementById('emailTo').value.trim();
     const errEl = document.getElementById('emailError');
     const sucEl = document.getElementById('emailSuccess');
+
     errEl.style.display = 'none';
     sucEl.style.display = 'none';
 
@@ -485,7 +408,7 @@
 
     const btn = document.getElementById('sendEmailBtn');
     btn.disabled = true;
-    btn.textContent = 'Sending…';
+    btn.textContent = 'Sending...';
 
     emailjs.send('service_nnjzk4j', 'template_r50wjct', {
       recipientEmail: to,
