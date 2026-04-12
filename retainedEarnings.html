@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Statement of Retained Earnings – Apex Accounts</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script>
+    function openCalendar() {
+      window.open("calendar.html", "CalendarPopup", "width=500,height=550,left=100,top=100,resizable=yes,scrollbars=no");
+    }
+    function openHelp() {
+      window.open("help.html", "HelpPopup", "width=700,height=600,left=120,top=80,resizable=yes,scrollbars=yes");
+    }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+  <script>(function () { emailjs.init("cC6e6ZNLke2V3BRfU"); })();</script>
+</head>
+<body>
+<header class="header-bar">
+  <img src="assets/logo.png" alt="Logo" width="120" title="Apex Accounts logo">
+  <div class="top-services">
+    <span onclick="openCalendar()" title="Open the calendar popup">Calendar</span>
+    <span onclick="window.location.href='chartOfAccounts.html'" title="Open the Chart of Accounts module">Chart of Accounts</span>
+    <span onclick="window.location.href='journaling.html'" title="Open the Journaling module">Journaling</span>
+    <span onclick="openHelp()" title="Open help information for the software">Help</span>
+  </div>
+  <div class="user-area">
+    <span id="headerUsername">Username: </span>
+    <a href="profile.html" title="Open your user profile">
+      <img id="userAvatar" src="assets/userManager.png" alt="User Profile" width="40" height="40">
+    </a>
+    <a href="login.html" onclick="localStorage.clear()" title="Log out of the system">Logout</a>
+  </div>
+</header>
+
+<main>
+  <h1>Statement of Retained Earnings</h1>
+  <fieldset>
+    <legend>Report Period</legend>
+    <label for="dateFrom">From Date *</label><br>
+    <input type="date" id="dateFrom" required
+      title="Select the start date for the reporting period"><br><br>
+    <label for="dateTo">To Date *</label><br>
+    <input type="date" id="dateTo" required
+      title="Select the end date for the reporting period"><br><br>
+    <p id="dateError" style="color:red; display:none;"></p>
+    <button onclick="generateReport()"
+      title="Generate the statement of retained earnings for the selected date range">
+      Generate Report
+    </button>
+  </fieldset>
+  <br>
+  <p id="loadingMsg" style="display:none;">Generating report…</p>
+  <p id="reportError" style="color:red; display:none;"></p>
+
+  <div id="reportOutput" style="display:none;">
+    <h2>Apex Accounts</h2>
+    <h3>Statement of Retained Earnings</h3>
+    <p id="reportPeriodLabel"></p>
+    <p id="reportGeneratedLabel" style="font-size:12px;"></p>
+    <br>
+    <table border="1" cellpadding="8" cellspacing="0" style="width:100%; max-width:680px;"
+      title="Statement of Retained Earnings for the selected period">
+      <thead>
+        <tr>
+          <th title="Line item description">Item</th>
+          <th style="text-align:right;" title="Dollar amount">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Beginning Retained Earnings</td>
+          <td style="text-align:right;" id="begRE">$0.00</td>
+        </tr>
+        <tr>
+          <td>Add: Net Income</td>
+          <td style="text-align:right;" id="netIncome">$0.00</td>
+        </tr>
+        <tr>
+          <td>Less: Dividends Declared</td>
+          <td style="text-align:right;" id="dividends">$0.00</td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr>
+          <td><strong>Ending Retained Earnings</strong></td>
+          <td style="text-align:right;"><strong id="endRE">$0.00</strong></td>
+        </tr>
+      </tfoot>
+    </table>
+    <br>
+
+    <div id="reportOutput" style="display:none;">
+    <h2>Apex Accounts</h2>
+    <h3>Statement of Retained Earnings</h3>
+    <p id="reportPeriodLabel"></p>
+    <p id="reportGeneratedLabel" style="font-size:12px;"></p>
+    <br>
+    <table border="1" cellpadding="8" cellspacing="0" style="width:100%; max-width:680px;"
+      title="Statement of Retained Earnings for the selected period">
+      <thead>
+        <tr>
+          <th title="Line item description">Item</th>
+          <th style="text-align:right;" title="Dollar amount">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Beginning Retained Earnings</td>
+          <td style="text-align:right;" id="begRE">$0.00</td>
+        </tr>
+        <tr>
+          <td>Add: Net Income</td>
+          <td style="text-align:right;" id="netIncome">$0.00</td>
+        </tr>
+        <tr>
+          <td>Less: Dividends Declared</td>
+          <td style="text-align:right;" id="dividends">$0.00</td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr>
+          <td><strong>Ending Retained Earnings</strong></td>
+          <td style="text-align:right;"><strong id="endRE">$0.00</strong></td>
+        </tr>
+      </tfoot>
+    </table>
+    <br>
+
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <button onclick="window.print()"
+        title="Print the statement using your browser's print dialog">Print</button>
+      <button onclick="saveCSV()"
+        title="Save the statement as a CSV file">Save (CSV)</button>
+      <button onclick="openEmailDialog()"
+        title="Email the statement to a recipient">Email Report</button>
+    </div>
+  </div>
+  <br>
+  <a href="#" id="backLink" title="Return to your dashboard">← Back to Dashboard</a>
+</main>
+
+<dialog id="emailDialog">
+  <h3>Email Statement of Retained Earnings</h3>
+  <label for="emailTo">Recipient Email *</label><br>
+  <input type="email" id="emailTo" placeholder="recipient@example.com"
+    title="Enter the recipient's email address"><br><br>
+  <label for="emailSubject">Subject</label><br>
+  <input type="text" id="emailSubject"
+    title="Enter the email subject line"><br><br>
+  <label for="emailMessage">Message</label><br>
+  <textarea id="emailMessage" rows="5" cols="50"
+    title="Enter an optional message to include with the report"></textarea><br><br>
+  <p id="emailError" style="color:red; display:none;"></p>
+  <p id="emailSuccess" style="color:green; display:none;"></p>
+  <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:8px;">
+    <button onclick="document.getElementById('emailDialog').close()"
+      title="Cancel and close">Cancel</button>
+    <button id="sendEmailBtn" onclick="sendEmail()"
+      title="Send the report via email">Send</button>
+  </div>
+</dialog>
+
+<!-- Auth -->
+<script type="module">
+  import { auth, db } from './firebase-config.js';
+  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  import {
+    collection, getDocs, doc, getDoc, addDoc, query, where, serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+  let currentUser = null;
+  let reportData = null;
+
+  const fmtMoney = v => new Intl.NumberFormat('en-US', {
+    style: 'currency', currency: 'USD',
+    minimumFractionDigits: 2, maximumFractionDigits: 2
+  }).format(v);
+
+  const fmtDate = iso => new Date(iso + 'T00:00:00').toLocaleDateString('en-US', {
+    year: 'numeric', month: 'long', day: 'numeric'
+  });
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) { window.location.href = 'login.html'; return; }
+    currentUser = user;
+    const snap = await getDoc(doc(db, 'users', user.uid));
+    if (!snap.exists()) { window.location.href = 'login.html'; return; }
+    const ud = snap.data();
+    document.getElementById('headerUsername').textContent = 'Username: ' + (ud.username || '');
+    const av = document.getElementById('userAvatar');
+    if (ud.role === 'administrator') av.src = 'assets/userAdmin.png';
+    else if (ud.role === 'accountant') av.src = 'assets/userAccountant.png';
+    const role = ud.role || '';
+    document.getElementById('backLink').href =
+      role === 'administrator' ? 'adminDashboard.html' :
+      role === 'manager' ? 'managerDashboard.html' : 'accountantDashboard.html';
+  });
+
+
+
+
+  window.generateReport = async function () {
+    const dateFrom = document.getElementById('dateFrom').value;
+    const dateTo = document.getElementById('dateTo').value;
+    const dateErr = document.getElementById('dateError');
+    dateErr.style.display = 'none';
+
+        //Date validation 
+
+    if (!dateFrom || !dateTo) {
+      dateErr.textContent = 'Please select both a start and end date.';
+      dateErr.style.display = 'block'; return;
+    }
+    if (dateTo < dateFrom) {
+      dateErr.textContent = 'End date must be on or after the start date.';
+      dateErr.style.display = 'block'; return;
+    }
+
+    document.getElementById('loadingMsg').style.display = 'block';
+    document.getElementById('reportOutput').style.display = 'none';
+    document.getElementById('reportError').style.display = 'none';
+
+    try {
+     //Getting data from firebase
+      const acctSnap = await getDocs(collection(db, 'accounts'));
+      const accounts = {};
+      acctSnap.docs.forEach(d => {
+        const a = d.data();
+        accounts[d.id] = { ...a, id: d.id, periodDebit: 0, periodCredit: 0 };
+      });
+
+      
+      const entriesSnap = await getDocs(
+        query(collection(db, 'journalEntries'),
+          where('status', '==', 'approved'),
+          where('date', '>=', dateFrom),
+          where('date', '<=', dateTo))
+      );
+
+      
+      entriesSnap.docs.forEach(d => {
+        (d.data().lines || []).forEach(line => {
+          if (accounts[line.accountId]) {
+            const amt = Number(line.amount || 0);
+            if (line.type === 'debit') accounts[line.accountId].periodDebit += amt;
+            if (line.type === 'credit') accounts[line.accountId].periodCredit += amt;
+          }
+        });
+      });
+
+    
+      // Revenue accounts are balance = credits - debits
+      // Expense accounts balance = debits - credits
+      let totalRevenue = 0;
+      let totalExpenses = 0;
+      Object.values(accounts).forEach(a => {
+        if (a.accountCategory === 'Revenue') {
+          totalRevenue += (a.periodCredit - a.periodDebit);
+        } else if (a.accountCategory === 'Expense') {
+          totalExpenses += (a.periodDebit - a.periodCredit);
+        }
+      });
+      const netIncome = parseFloat((totalRevenue - totalExpenses).toFixed(2));
+
+ 
+      let begRE = 0;
+      Object.values(accounts).forEach(a => {
+        if (a.accountName && a.accountName.toLowerCase().includes('retained earning')) {
+          begRE = a.initialBalance || 0;
+        }
+      });
+
+
+      // Dividends is a debit-normal account, balance = debits - credits
+      let dividends = 0;
+      Object.values(accounts).forEach(a => {
+        if (a.accountName && a.accountName.toLowerCase().includes('dividend')) {
+          dividends += (a.periodDebit - a.periodCredit);
+        }
+      });
+
+
+      const endRE = parseFloat((begRE + netIncome - dividends).toFixed(2));
+
+
+      reportData = { dateFrom, dateTo, begRE, netIncome, dividends, endRE };
+
+      // Displays everything
+      document.getElementById('reportPeriodLabel').textContent =
+        `For the period: ${fmtDate(dateFrom)} – ${fmtDate(dateTo)}`;
+      document.getElementById('reportGeneratedLabel').textContent =
+        `Generated: ${new Date().toLocaleString()} · ${document.getElementById('headerUsername').textContent}`;
+
+      document.getElementById('begRE').textContent = fmtMoney(begRE);
+      document.getElementById('netIncome').textContent = fmtMoney(netIncome);
+      document.getElementById('dividends').textContent = fmtMoney(dividends);
+      document.getElementById('endRE').textContent = fmtMoney(endRE);
+
+
+      document.getElementById('emailSubject').value =
+        `Statement of Retained Earnings: ${fmtDate(dateFrom)} – ${fmtDate(dateTo)}`;
+      document.getElementById('emailMessage').value =
+        `Statement of Retained Earnings\n${fmtDate(dateFrom)} – ${fmtDate(dateTo)}\n\nBeginning Retained Earnings: ${fmtMoney(begRE)}\nAdd: Net Income: ${fmtMoney(netIncome)}\nLess: Dividends: ${fmtMoney(dividends)}\nEnding Retained Earnings: ${fmtMoney(endRE)}`;
+
+      // Save to Firestore
+      await addDoc(collection(db, 'savedReports'), {
+        reportType: 'Statement of Retained Earnings',
+        dateFrom, dateTo, begRE, netIncome, dividends, endRE,
+        generatedBy: currentUser.uid,
+        generatedAt: serverTimestamp(),
+      });
+
+      document.getElementById('loadingMsg').style.display = 'none';
+      document.getElementById('reportOutput').style.display = 'block';
+    } catch (err) {
+      document.getElementById('loadingMsg').style.display = 'none';
+      const el = document.getElementById('reportError');
+      el.textContent = 'Failed to generate report: ' + err.message;
+      el.style.display = 'block';
+    }
+  };
+
+
+  // Save CSV
+  window.saveCSV = function () {
+    if (!reportData) return;
+    const raw = v => Number(v).toFixed(2);
+    const rows = [
+      ['Apex Accounts — Statement of Retained Earnings'],
+      [`Period: ${reportData.dateFrom} to ${reportData.dateTo}`],
+      [`Generated: ${new Date().toLocaleString()}`],
+      [],
+      ['Item', 'Amount'],
+      ['Beginning Retained Earnings', raw(reportData.begRE)],
+      ['Add: Net Income', raw(reportData.netIncome)],
+      ['Less: Dividends Declared', raw(reportData.dividends)],
+      ['Ending Retained Earnings', raw(reportData.endRE)]
+    ];
+    const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `retained-earnings-${reportData.dateFrom}-to-${reportData.dateTo}.csv`;
+    link.click();
+  };
+
+  window.openEmailDialog = function () {
+    document.getElementById('emailError').style.display = 'none';
+    document.getElementById('emailSuccess').style.display = 'none';
+    document.getElementById('emailDialog').showModal();
+  };
+
+  // Send email
+  window.sendEmail = function () {
+    const to = document.getElementById('emailTo').value.trim();
+    const errEl = document.getElementById('emailError');
+    const sucEl = document.getElementById('emailSuccess');
+    errEl.style.display = 'none';
+    sucEl.style.display = 'none';
+    if (!to || !to.includes('@')) {
+      errEl.textContent = 'Please enter a valid recipient email address.';
+      errEl.style.display = 'block'; return;
+    }
+    const btn = document.getElementById('sendEmailBtn');
+    btn.disabled = true; btn.textContent = 'Sending…';
+    emailjs.send('service_nnjzk4j', 'template_r50wjct', {
+      recipientEmail: to,
+      subject: document.getElementById('emailSubject').value.trim(),
+      message: document.getElementById('emailMessage').value.trim(),
+      name: localStorage.getItem('username') || 'Apex Accounts',
+      time: new Date().toLocaleString(),
+      email: to
+    }).then(() => {
+      sucEl.textContent = 'Report emailed successfully!';
+      sucEl.style.display = 'block';
+      btn.disabled = false; btn.textContent = 'Send';
+    }, (error) => {
+      errEl.textContent = 'Failed to send: ' + JSON.stringify(error);
+      errEl.style.display = 'block';
+      btn.disabled = false; btn.textContent = 'Send';
+    });
+  };
+</script>
+</body>
+</html>
