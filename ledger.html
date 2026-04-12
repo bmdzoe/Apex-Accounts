@@ -198,7 +198,7 @@
       allEntries = allEntries.map(entry => {
         const debit = Number(entry.debit || 0);
         const credit = Number(entry.credit || 0);
-        running = running + debit - credit;
+        running = running + credit - debit;
         return { ...entry, runningBalance: parseFloat(running.toFixed(2)) };
       });
 

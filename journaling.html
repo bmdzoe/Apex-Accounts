@@ -30,8 +30,6 @@
   <input type="date" id="jeDate" required><br><br>
   <label>Description</label><br>
   <input type="text" id="jeDesc" placeholder="Optional description…"><br><br>
-  <label>Reference #</label><br>
-  <input type="text" id="jeRef" placeholder="e.g. INV-001"><br><br>
   <p><strong>Debits</strong></p>
   <div id="debitLines"></div>
   <button type="button" onclick="addLine('debit')">+ Add Debit Line</button>
@@ -91,7 +89,7 @@
 <script type="module">
   import { auth, db } from './firebase-config.js';
   import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-  import { collection, getDocs, addDoc, doc, getDoc, query, where, orderBy, documentId, serverTimestamp }
+  import { collection, getDocs, addDoc, doc, getDoc, query, where, orderBy, documentId, serverTimestamp, getCountFromServer }
     from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
   import { getStorage, ref, uploadBytes, getDownloadURL }
     from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
@@ -200,9 +198,10 @@
           attMeta.push({ name: f.name, url: await getDownloadURL(r) });
         } catch { attMeta.push({ name: f.name, url: null }); }
       }
+      const ref = await genRef();
       const entryRef = await addDoc(collection(db, 'journalEntries'), {
         date, description: document.getElementById('jeDesc').value.trim(),
-        reference: document.getElementById('jeRef').value.trim(),
+        reference: ref,
         lines, totalDebit: parseFloat(tD.toFixed(2)), totalCredit: parseFloat(tC.toFixed(2)),
         attachments: attMeta, status: 'pending',
         submittedBy: uid, submittedByUsername: uname,
@@ -223,7 +222,7 @@
   window.resetForm = () => { if (confirm('Reset form?')) resetFormFields(); };
   function resetFormFields() {
     document.getElementById('jeDate').valueAsDate = new Date();
-    ['jeDesc', 'jeRef'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('jeDesc').value = '';
     document.getElementById('debitLines').innerHTML = '';
     document.getElementById('creditLines').innerHTML = '';
     document.getElementById('fileList').innerHTML = '';
@@ -278,6 +277,13 @@
     ['srch','fFrom','fTo'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('fStat').value = ''; filter();
   };
+
+  async function genRef(){ // Auto-generate reference number
+    const snap = await getCountFromServer(collection(db, 'journalEntries'));
+    const ref = String(snap.data().count + 1); // Reference number is amount of journal entries + 1
+    const padRef = ref.padStart(3, '0');
+    return "INV-" + padRef;
+  }
 
   function showErr(msg) {
     const el = document.getElementById('msg');
