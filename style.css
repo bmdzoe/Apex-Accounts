@@ -1,31 +1,30 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
 
 :root {
-  --bg:            #0a0f1e;
-  --bg-2:          #0c1018;
-  --surface:       #101828;
-  --surface-2:     #162034;
-  --surface-3:     #1a2232;
-  --border:        #1e2e48;
-  --border-light:  #2a3a52;
-  --gold:          #c9a84c;
-  --gold-light:    #e2c078;
-  --gold-dim:      rgba(201, 168, 76, 0.12);
-  --gold-glow:     rgba(201, 168, 76, 0.08);
-  --text:          #e8eef8;
-  --text-muted:    #6b82a8;
-  --text-dim:      #364257;
-  --danger:        #d95c5c;
-  --danger-dim:    rgba(217, 92, 92, 0.1);
-  --success:       #4caf82;
-  --success-dim:   rgba(76, 175, 130, 0.1);
-  --radius:        4px;
-  --radius-lg:     8px;
-  --shadow-card:   0 40px 100px rgba(0,0,0,0.7), 0 8px 32px rgba(0,0,0,0.5);
-  --shadow-sm:     0 2px 12px rgba(0,0,0,0.4);
-  --transition:    0.2s ease;
+    --bg:            #d2c4b0;
+    --bg-2:          #c8b9a4;
+    --surface:       #e3d9cc;
+    --surface-2:     #dbd0c2;
+    --surface-3:     #d0c4b5;
+    --border:        #b0a08a;
+    --border-light:  #a3937c;
+    --gold:          #6b3a2a;
+    --gold-light:    #854d3a;
+    --gold-dim:      rgba(107, 58, 42, 0.1);
+    --gold-glow:     rgba(107, 58, 42, 0.06);
+    --text:          #2a1c12;
+    --text-muted:    #5e4535;
+    --text-dim:      #87715f;
+    --danger:        #8b2020;
+    --danger-dim:    rgba(139, 32, 32, 0.1);
+    --success:       #3d6b3d;
+    --success-dim:   rgba(61, 107, 61, 0.1);
+    --radius:        4px;
+    --radius-lg:     8px;
+    --shadow-card:   0 2px 10px rgba(42, 28, 18, 0.1), 0 1px 4px rgba(42, 28, 18, 0.07);
+    --shadow-sm:     0 1px 3px rgba(42, 28, 18, 0.07);
+    --transition:    0.2s ease;
 }
-
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -64,29 +63,6 @@ a:hover { color: var(--gold-light); }
     width: 100%;
     max-width: 450px;
     margin: auto;     
-}
-
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background:
-    radial-gradient(ellipse 70% 50% at 50% -5%,  rgba(201,168,76,0.08) 0%, transparent 55%),
-    radial-gradient(ellipse 40% 35% at 85% 85%,  rgba(201,168,76,0.04) 0%, transparent 50%);
-  pointer-events: none;
-  z-index: 0;
-}
-
-body::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(255,255,255,0.012) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.012) 1px, transparent 1px);
-  background-size: 48px 48px;
-  pointer-events: none;
-  z-index: 0;
 }
 
 .login-card {
@@ -222,7 +198,7 @@ body::after {
 .form-group select:focus,
 .form-group textarea:focus{
   border-color: var(--gold);
-  background: #111722;
+background: var(--surface);
   box-shadow: 0 0 0 3px var(--gold-dim);
 }
 
@@ -450,7 +426,7 @@ main input:focus,
 main select:focus,
 main textarea:focus{
   border-color: var(--gold);
-  background: #111722;
+  background: var(--surface);
   box-shadow: 0 0 0 3px var(--gold-dim);
 }
 
@@ -517,23 +493,23 @@ html, body {
 }
 .top-services {
   display: flex;
-  justify-content: flex-start; 
+  justify-content: flex-start;
   align-items: center;
   gap: 18px;
-  margin: 10px 0 10px 0;      
-  padding-left: 0;             
-  border-bottom: 1px solid #444;
+  margin: 10px 0 10px 0;
+  padding-left: 0;
+  border-bottom: 1px solid var(--border);
 }
 
 .top-services span {
   cursor: pointer;
-  color: #c8a96b;
+  color: var(--gold);
   font-weight: 500;
   position: relative;
 }
 
 .top-services span:hover {
-  color: #ffffff;
+  color: var(--text);
 }
 
 .top-services span::after {
@@ -543,7 +519,7 @@ html, body {
   bottom: -4px;
   width: 0%;
   height: 2px;
-  background: #c8a96b;
+  background: var(--gold);
   transition: width 0.2s ease;
 }
 
