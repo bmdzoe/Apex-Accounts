@@ -18,15 +18,12 @@
     <a href="login.html" onclick="localStorage.clear()" title="Log out of Apex Accounts">Logout</a>
   </div>
 </header>
-
 <main>
   <p id="loadingMsg">Loading ledger…</p>
   <p id="errorMsg" style="color:red; display:none;"></p>
-
   <div id="ledgerContent" style="display:none;">
     <h1 id="accountTitle">Ledger</h1>
     <p id="accountSubtitle" style="color:#7a7870; margin-top:-8px; margin-bottom:20px;"></p>
-
     <div style="margin-bottom:24px;">
       <table border="1" cellpadding="8" cellspacing="0" id="accountDetailTable" style="margin-bottom:16px;">
         <thead>
@@ -42,93 +39,70 @@
         </thead>
         <tbody id="accountDetailBody"></tbody>
       </table>
-
       <div style="display:flex; gap:40px; flex-wrap:wrap; margin-bottom:8px;">
         <div><h3>Initial Balance</h3><p id="s-initial">—</p></div>
         <div><h3>Total Debits</h3><p id="s-debit">—</p></div>
         <div><h3>Total Credits</h3><p id="s-credit">—</p></div>
         <div><h3>Current Balance</h3><p id="s-balance">—</p></div>
       </div>
-
       <p id="accountDescription" style="color:#555;"></p>
       <p id="accountComment" style="color:#7a7870; font-style:italic;"></p>
     </div>
-
     <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:14px;">
       <input type="text" id="searchInput" placeholder="Search transactions…"
-        title="Search ledger entries by description, type, or date"
+        title="Search ledger entries by description, post ref, or date"
         oninput="applyFilters()">
-
-      <select id="filterType" onchange="applyFilters()"
-        title="Filter transactions by debit or credit type">
-        <option value="">All Types</option>
-        <option value="debit">Debit</option>
-        <option value="credit">Credit</option>
-      </select>
 
       <input type="date" id="filterDateFrom"
         title="Show transactions from this date onwards"
         onchange="applyFilters()">
-
       <span>to</span>
-
       <input type="date" id="filterDateTo"
         title="Show transactions up to this date"
         onchange="applyFilters()">
-
       <button onclick="clearFilters()"
         title="Clear all filters and show all transactions">
         Clear Filters
       </button>
-
       <button onclick="exportCSV()"
         title="Export the current ledger entries to a CSV file">
         Export CSV
       </button>
-
       <button onclick="window.location.href='sendEmail.html'" 
       title="Send an email to a manager or accountant user">Send Email
     </button>
-
       <span id="rowCount" style="margin-left:auto;"></span>
     </div>
-
     <p id="emptyMsg" style="display:none;">No transactions found for this account.</p>
-
     <div id="tableWrap" style="overflow-x:auto;">
       <table border="1" cellpadding="8" cellspacing="0" id="ledgerTable" style="width:100%; min-width:700px;">
         <thead>
           <tr>
             <th onclick="sortBy('date')" style="cursor:pointer;" title="Sort by date">Date ↕</th>
             <th onclick="sortBy('description')" style="cursor:pointer;" title="Sort by description">Description ↕</th>
-            <th onclick="sortBy('type')" style="cursor:pointer;" title="Sort by type">Type ↕</th>
+            <th onclick="sortBy('postRef')" style="cursor:pointer;" title="Sort by post reference">Post Ref ↕</th>
             <th style="text-align:right;" title="Debit amount">Debit</th>
             <th style="text-align:right;" title="Credit amount">Credit</th>
             <th onclick="sortBy('runningBalance')" style="cursor:pointer; text-align:right;" title="Sort by running balance">Balance ↕</th>
-            <th>Post Ref</th>
           </tr>
         </thead>
         <tbody id="ledgerBody"></tbody>
       </table>
     </div>
-
     <div id="pagRow" style="display:flex; align-items:center; justify-content:space-between; margin-top:10px;">
       <span id="pagInfo"></span>
       <div id="pagBtns"></div>
     </div>
   </div>
-
   <br>
   <a href="chartOfAccounts.html" title="Return to the Chart of Accounts">← Back to Chart of Accounts</a>
 </main>
-
 <script type="module">
   import { auth, db } from './firebase-config.js';
   import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
   import {
     collection, getDocs, doc, getDoc, query, where
   } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
   let allEntries = [];
   let filteredEntries = [];
   let accountData = null;
@@ -136,64 +110,49 @@
   let sortAsc = true;
   let currentPage = 1;
   const PAGE_SIZE = 15;
-
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
       window.location.href = 'login.html';
       return;
     }
-
     const snap = await getDoc(doc(db, 'users', user.uid));
     if (!snap.exists()) {
       window.location.href = 'login.html';
       return;
     }
-
     const ud = snap.data();
     document.getElementById('headerUsername').textContent = 'Username: ' + (ud.username || '');
-
     const av = document.getElementById('userAvatar');
     if (ud.role === 'administrator') av.src = 'assets/userAdmin.png';
     else if (ud.role === 'manager') av.src = 'assets/userManager.png';
-
     await loadLedger();
   });
-
   function getAccountId() {
     return new URLSearchParams(window.location.search).get('accountId');
   }
-
   async function loadLedger() {
     const accountId = getAccountId();
-
     if (!accountId) {
       showError('No account specified. Please return to the Chart of Accounts.');
       return;
     }
-
     try {
       const accountSnap = await getDoc(doc(db, 'accounts', accountId));
-
       if (!accountSnap.exists()) {
         showError('Account not found. It may have been deleted.');
         return;
       }
-
       accountData = { id: accountSnap.id, ...accountSnap.data() };
       renderAccountHeader();
-
       const entriesSnap = await getDocs(
         query(collection(db, 'ledgerEntries'), where('accountId', '==', accountId))
       );
-
       allEntries = entriesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-
       allEntries.sort((a, b) => {
         const da = a.date?.toDate?.() || new Date(a.date || 0);
         const db2 = b.date?.toDate?.() || new Date(b.date || 0);
         return da - db2;
       });
-
       let running = accountData.initialBalance || 0;
       allEntries = allEntries.map(entry => {
         const debit = Number(entry.debit || 0);
@@ -205,7 +164,6 @@
         }
         return { ...entry, runningBalance: parseFloat(running.toFixed(2)) };
       });
-
       document.getElementById('loadingMsg').style.display = 'none';
       document.getElementById('ledgerContent').style.display = 'block';
       applyFilters();
@@ -213,16 +171,12 @@
       showError('Failed to load ledger: ' + err.message);
     }
   }
-
   function renderAccountHeader() {
     const a = accountData;
-
     document.getElementById('accountTitle').textContent =
       `Ledger — ${a.accountNumber}: ${a.accountName}`;
-
     document.getElementById('accountSubtitle').textContent =
       `${a.accountCategory}${a.accountSubcategory ? ' · ' + a.accountSubcategory : ''} · ${a.currency || 'USD'} · ${a.isActive !== false ? 'Active' : 'Inactive'}`;
-
     document.getElementById('accountDetailBody').innerHTML = `
       <tr>
         <td>${a.accountNumber || '—'}</td>
@@ -233,58 +187,43 @@
         <td>${a.currency || 'USD'}</td>
         <td>${a.isActive !== false ? 'Active' : 'Inactive'}</td>
       </tr>`;
-
     const fmt = v => fmtMoney(v, a.currency || 'USD');
     document.getElementById('s-initial').textContent = fmt(a.initialBalance || 0);
     document.getElementById('s-debit').textContent = fmt(a.debit || 0);
     document.getElementById('s-credit').textContent = fmt(a.credit || 0);
     document.getElementById('s-balance').textContent = fmt(a.balance || 0);
-
     if (a.accountDescription) {
       document.getElementById('accountDescription').textContent = a.accountDescription;
     }
-
     if (a.comment) {
       document.getElementById('accountComment').textContent = 'Note: ' + a.comment;
     }
   }
-
   window.applyFilters = function () {
     const q = document.getElementById('searchInput').value.toLowerCase();
-    const type = document.getElementById('filterType').value;
     const dateFrom = document.getElementById('filterDateFrom').value;
     const dateTo = document.getElementById('filterDateTo').value;
-
     filteredEntries = allEntries.filter(e => {
       const entryDate = e.date?.toDate?.() || new Date(e.date || 0);
       const dateStr = entryDate.toISOString().split('T')[0];
-
       const matchQ =
         !q ||
         (e.description || '').toLowerCase().includes(q) ||
-        (e.type || '').toLowerCase().includes(q) ||
         (e.reference || '').toLowerCase().includes(q) ||
         (e.postRef || '').toLowerCase().includes(q);
-
-      const matchType = !type || (e.type || '').toLowerCase() === type;
       const matchFrom = !dateFrom || dateStr >= dateFrom;
       const matchTo = !dateTo || dateStr <= dateTo;
-
-      return matchQ && matchType && matchFrom && matchTo;
+      return matchQ && matchFrom && matchTo;
     });
-
     currentPage = 1;
     sortAndRender();
   };
-
   window.clearFilters = function () {
     document.getElementById('searchInput').value = '';
-    document.getElementById('filterType').value = '';
     document.getElementById('filterDateFrom').value = '';
     document.getElementById('filterDateTo').value = '';
     applyFilters();
   };
-
   window.sortBy = function (col) {
     if (sortCol === col) sortAsc = !sortAsc;
     else {
@@ -293,54 +232,42 @@
     }
     sortAndRender();
   };
-
   function sortAndRender() {
     filteredEntries.sort((a, b) => {
       let va, vb;
-
       if (sortCol === 'date') {
         va = a.date?.toDate?.() || new Date(a.date || 0);
         vb = b.date?.toDate?.() || new Date(b.date || 0);
         return sortAsc ? va - vb : vb - va;
       }
-
       va = a[sortCol] ?? '';
       vb = b[sortCol] ?? '';
-
       if (typeof va === 'number') {
         return sortAsc ? va - vb : vb - va;
       }
-
       return sortAsc
         ? String(va).localeCompare(String(vb))
         : String(vb).localeCompare(String(va));
     });
-
     renderTable();
   }
-
   function renderTable() {
     const total = filteredEntries.length;
     document.getElementById('rowCount').textContent = `${total} entr${total !== 1 ? 'ies' : 'y'}`;
-
     if (total === 0) {
       document.getElementById('tableWrap').style.display = 'none';
       document.getElementById('emptyMsg').style.display = 'block';
       document.getElementById('pagRow').style.display = 'none';
       return;
     }
-
     document.getElementById('emptyMsg').style.display = 'none';
     document.getElementById('tableWrap').style.display = 'block';
     document.getElementById('pagRow').style.display = 'flex';
-
     const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
     if (currentPage > totalPages) currentPage = totalPages;
-
     const start = (currentPage - 1) * PAGE_SIZE;
     const pageRows = filteredEntries.slice(start, start + PAGE_SIZE);
     const cur = accountData?.currency || 'USD';
-
     document.getElementById('ledgerBody').innerHTML = pageRows.map(e => {
       const entryDate = e.date?.toDate?.() || new Date(e.date || 0);
       const dateStr = entryDate.toLocaleDateString('en-US', {
@@ -348,16 +275,22 @@
         month: 'short',
         day: '2-digit'
       });
-
       const debit = Number(e.debit || 0);
       const credit = Number(e.credit || 0);
       const bal = Number(e.runningBalance || 0);
-
       return `
         <tr>
           <td>${dateStr}</td>
           <td>${e.description || '—'}</td>
-          <td>${e.type || '—'}</td>
+          <td>
+            ${
+              e.journalEntryId
+                ? `<a href="viewJournalEntry.html?entryId=${e.journalEntryId}" title="Open the source journal entry">
+                     ${e.postRef || e.reference || e.journalEntryId.substring(0, 8)}
+                   </a>`
+                : (e.postRef || e.reference || '—')
+            }
+          </td>
           <td style="text-align:right; color:${debit > 0 ? '#1a7a4a' : '#aaa'};">
             ${debit > 0 ? fmtMoney(debit, cur) : '—'}
           </td>
@@ -367,30 +300,17 @@
           <td style="text-align:right; font-weight:600; color:${bal >= 0 ? '#1a7a4a' : '#c0392b'};">
             ${fmtMoney(bal, cur)}
           </td>
-          <td>
-            ${
-              e.journalEntryId
-                ? `<a href="viewJournalEntry.html?entryId=${e.journalEntryId}" title="Open the source journal entry">
-                     ${e.postRef || e.reference || e.journalEntryId.substring(0, 8)}
-                   </a>`
-                : '—'
-            }
-          </td>
         </tr>`;
     }).join('');
-
     document.getElementById('pagInfo').textContent =
       `Showing ${start + 1}–${Math.min(start + PAGE_SIZE, total)} of ${total}`;
 
     renderPagination(totalPages);
   }
-
   function renderPagination(totalPages) {
     const c = document.getElementById('pagBtns');
     c.innerHTML = '';
-
     if (totalPages <= 1) return;
-
     const mkBtn = (label, p, disabled) => {
       const b = document.createElement('button');
       b.textContent = label;
@@ -402,12 +322,10 @@
       };
       return b;
     };
-
     c.appendChild(mkBtn('←', currentPage - 1, currentPage === 1));
     for (let i = 1; i <= totalPages; i++) c.appendChild(mkBtn(String(i), i, false));
     c.appendChild(mkBtn('→', currentPage + 1, currentPage === totalPages));
   }
-
   function fmtMoney(v, cur = 'USD') {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -416,31 +334,26 @@
       maximumFractionDigits: 2
     }).format(v);
   }
-
   function showError(msg) {
     document.getElementById('loadingMsg').style.display = 'none';
     const el = document.getElementById('errorMsg');
     el.textContent = msg;
     el.style.display = 'block';
   }
-
   window.exportCSV = function () {
     const fmtRaw = v => Number(v).toFixed(2);
-    const rows = [['Date', 'Description', 'Type', 'Debit', 'Credit', 'Running Balance', 'Post Ref']];
-
+    const rows = [['Date', 'Description', 'Post Ref', 'Debit', 'Credit', 'Balance']];
     filteredEntries.forEach(e => {
       const entryDate = e.date?.toDate?.() || new Date(e.date || 0);
       rows.push([
         entryDate.toLocaleDateString('en-US'),
         (e.description || '').replace(/"/g, '""'),
-        e.type || '',
+        e.postRef || e.reference || e.journalEntryId || '',
         fmtRaw(e.debit || 0),
         fmtRaw(e.credit || 0),
-        fmtRaw(e.runningBalance || 0),
-        e.postRef || e.reference || e.journalEntryId || ''
+        fmtRaw(e.runningBalance || 0)
       ]);
     });
-
     const csv = rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const link = document.createElement('a');

@@ -29,6 +29,16 @@
   <label>Date *</label><br>
   <input type="date" id="jeDate" required><br><br>
   <label>Description</label><br>
+
+  <!-- Journal type drop down -->
+<label>Journal Entry Type</label><br>
+<select id="jeType" title="Select the type of journal entry">
+    <option value="Regular" selected>Regular</option>
+    <option value="Adjusting">Adjusting</option>
+    <option value="Reversing">Reversing</option>
+    <option value="Closing">Closing</option>
+</select><br><br>
+
   <input type="text" id="jeDesc" placeholder="Optional description…"><br><br>
   <p><strong>Debits</strong></p>
   <div id="debitLines"></div>
@@ -200,7 +210,10 @@
       }
       const ref = await genRef();
       const entryRef = await addDoc(collection(db, 'journalEntries'), {
-        date, description: document.getElementById('jeDesc').value.trim(),
+
+      date, journalType: document.getElementById('jeType').value,
+      description: document.getElementById('jeDesc').value.trim(),
+
         reference: ref,
         lines, totalDebit: parseFloat(tD.toFixed(2)), totalCredit: parseFloat(tC.toFixed(2)),
         attachments: attMeta, status: 'pending',
@@ -222,7 +235,7 @@
   window.resetForm = () => { if (confirm('Reset form?')) resetFormFields(); };
   function resetFormFields() {
     document.getElementById('jeDate').valueAsDate = new Date();
-    document.getElementById('jeDesc').value = '';
+    document.getElementById('jeType').value = 'Regular';
     document.getElementById('debitLines').innerHTML = '';
     document.getElementById('creditLines').innerHTML = '';
     document.getElementById('fileList').innerHTML = '';
@@ -263,9 +276,10 @@
       <tr>
         <td>${e.date||'—'}</td>
         <td>${e.description||'—'}${e.reference ? `<br><small>Ref: ${e.reference}</small>` : ''}</td>
-        <td>${(e.lines||[]).map(l => `${l.type==='debit'?'Dr':'Cr'}: ${l.accountName||l.accountId}`).join('<br>')}</td>
-        <td>${fmt(e.totalDebit||0)}</td>
-        <td>${fmt(e.totalCredit||0)}</td>
+        <!-- Indent credit accounts -->
+        <td>${(e.lines||[]).map(l => l.type==='debit' ? `${l.accountName||l.accountId}` : `&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${l.accountName||l.accountId}`).join('<br>')}</td>
+        <td style="text-align:right">${fmt(e.totalDebit||0)}</td> <!-- Right justifying amounts -->
+        <td style="text-align:right">${fmt(e.totalCredit||0)}</td>
         <td>${e.status||'pending'}</td>
         <td>${e.submittedByUsername||'—'}</td>
         <td style="color:red">${e.rejectionComment||'—'}</td>
