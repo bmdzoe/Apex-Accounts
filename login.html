@@ -50,6 +50,12 @@
 
   const loginForm = document.getElementById('loginForm');
   const errorDiv  = document.getElementById('loginError');
+  let errorMap = null;
+
+  // Initialize error map
+  (async () => {
+    errorMap = await pullErrors();
+  })();
 
   function showError(msg) {
     errorDiv.textContent   = msg;
@@ -70,7 +76,7 @@
       const userSnap = await getDoc(userRef);
 
       if (!userSnap.exists()) {
-        showError("User record not found.");
+        showError( getError(errorMap, '19', 'type') + " User record not found.");
         return;
       }
 
@@ -154,20 +160,37 @@
               return;
             } else {
               await updateDoc(userDocRef, { loginAttempts: logins });
-              showError(`Incorrect password or email. Attempts remaining: ${3 - logins}`);
+              showError(getError(errorMap, '20', 'type') + ` Incorrect password or email. Attempts remaining: ${3 - logins}`);
               return;
             }
           } else {
-            showError("Login failed: Invalid email/password.");
+            showError(getError(errorMap, '21', 'type') + " Login failed: Invalid email/password.");
           }
         } catch (err) {
-          showError("Login failed with error: " + err.message);
+          showError(getError(errorMap, '22', 'type') + " Login failed with error: " + err.message);
         }
       } else {
-        showError("Login failed: " + error.message);
+        showError(getError(errorMap, '23', 'type') + " Login failed: " + error.message);
       }
     }
   });
+
+  async function pullErrors() { // Grab all error documents from Firestore
+    try {
+      const snap = await getDocs(query(collection(db, 'errors')));
+      return new Map(snap.docs.map(doc => [doc.id, doc.data()]));
+    } catch (e) {
+      console.error('Failed to load errors:', e.message);
+      return new Map();
+    }
+  }
+
+  function getError(map, id, field) { // Retrieve field data from specified error id
+    if(!map) return '[Error map not available]';
+    const error = map.get(id);
+    if (!error) return '[Trouble retrieving document]';
+    return error[field] || '[Field not found]';
+  }
 </script>
 </body>
 </html>

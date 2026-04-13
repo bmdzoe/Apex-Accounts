@@ -102,6 +102,13 @@
   import { doc, setDoc, serverTimestamp, Timestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
   const registerForm = document.getElementById('registerForm');
   const errorDiv     = document.getElementById('registerError');
+  let errorMap = null;
+
+  // Initialize error map
+  (async () => {
+    errorMap = await pullErrors();
+  })();
+
   registerForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     errorDiv.style.display = 'none';
@@ -111,7 +118,7 @@
     const pw      = document.getElementById('regPw').value;
     const confPw  = document.getElementById('confPw').value;
     if (pw !== confPw) {
-      errorDiv.textContent = "Passwords do not match.";
+      errorDiv.textContent = getError(errorMap, '17', 'type') + " Passwords do not match.";
       errorDiv.style.display = 'block';
       return;
     }
@@ -142,10 +149,27 @@
       });
       window.location.href = "pendingApproval.html";
     } catch(error) {
-      errorDiv.textContent = "Registration Failed: " + error.message;
+      errorDiv.textContent = getError(errorMap, '18', 'type') + " Registration Failed: " + error.message;
       errorDiv.style.display = 'block';
     }
   });
+
+  async function pullErrors() { // Grab all error documents from Firestore
+    try {
+      const snap = await getDocs(query(collection(db, 'errors')));
+      return new Map(snap.docs.map(doc => [doc.id, doc.data()]));
+    } catch (e) {
+      console.error('Failed to load errors:', e.message);
+      return new Map();
+    }
+  }
+
+  function getError(map, id, field) { // Retrieve field data from specified error id
+    if(!map) return '[Error map not available]';
+    const error = map.get(id);
+    if (!error) return '[Trouble retrieving document]';
+    return error[field] || '[Field not found]';
+  }
 </script>
 </body>
 </html>
