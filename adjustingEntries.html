@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Adjusting Entries – Apex Accounts</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script>
+    function openCalendar() {
+      window.open("calendar.html", "CalendarPopup", "width=500,height=550,left=100,top=100,resizable=yes,scrollbars=no");
+    }
+    function openHelp() {
+      window.open("help.html", "HelpPopup", "width=700,height=600,left=120,top=80,resizable=yes,scrollbars=yes");
+    }
+  </script>
+</head>
+<body>
+<header class="header-bar">
+  <img src="assets/logo.png" alt="Logo" width="120" title="Apex Accounts logo">
+  <div class="top-services">
+    <span onclick="openCalendar()" title="Open the calendar popup">Calendar</span>
+    <span onclick="window.location.href='chartOfAccounts.html'" title="Open the Chart of Accounts module">Chart of Accounts</span>
+    <span onclick="window.location.href='journaling.html'" title="Open the Journaling module">Journaling</span>
+    <span onclick="openHelp()" title="Open help information for the software">Help</span>
+  </div>
+  <div class="user-area">
+    <span id="uname">Username: </span>
+    <a href="profile.html" title="Open your user profile">
+      <img id="avatar" src="assets/userAccountant.png" width="40" height="40" alt="Profile">
+    </a>
+    <a href="login.html" onclick="localStorage.clear()" title="Log out of the system">Logout</a>
+  </div>
+</header>
+<main>
+  <h1>Adjusting Journal Entries</h1>
+  <p>Adjusting entries use only active accounts from the Chart of Accounts. Debits must equal credits before submission. Once approved by a manager, the entry will be posted to the ledger and reflected in financial statements.</p>
+  <p id="msg" style="display:none;"></p>
+  <!-- ── New Adjusting Entry Form ── -->
+  <h2>New Adjusting Entry</h2>
+  <label>Date *</label><br>
+  <input type="date" id="jeDate" required
+    title="Select the date for this adjusting entry"><br><br>
+  <label>Adjusting Entry Type</label><br>
+  <select id="jeType" title="Select the type of adjusting entry">
+    <option value="">— Select type (optional) —</option>
+    <option value="Accrued Revenue">Accrued Revenue</option>
+    <option value="Accrued Expense">Accrued Expense</option>
+    <option value="Deferred Revenue">Deferred Revenue</option>
+    <option value="Prepaid Expense">Prepaid Expense</option>
+    <option value="Depreciation">Depreciation</option>
+    <option value="Other">Other</option>
+  </select><br><br>
+  <label>Description</label><br>
+  <input type="text" id="jeDesc" placeholder="e.g. Accrue interest expense for December…"
+    title="Enter a description for this adjusting entry"><br><br>
+  <label>Reference #</label><br>
+  <input type="text" id="jeRef" placeholder="e.g. ADJ-001"
+    title="Enter an optional reference number for this adjusting entry"><br><br>
+  <p><strong>Debits</strong></p>
+  <div id="debitLines"></div>
+  <button type="button" onclick="addLine('debit')"
+    title="Add another debit line to this adjusting entry">
+    + Add Debit Line
+  </button>
+  <br><br>
+  <p><strong>Credits</strong></p>
+  <div id="creditLines"></div>
+  <button type="button" onclick="addLine('credit')"
+    title="Add another credit line to this adjusting entry">
+    + Add Credit Line
+  </button>
+  <br><br>
+  <p>Total Debits: <strong id="tD">$0.00</strong> &nbsp; Total Credits: <strong id="tC">$0.00</strong></p>
+  <p id="balMsg"></p>
+  <p id="lineErr" style="color:red; display:none;">At least one debit and one credit line are required.</p>
+  <p>
+    <strong>Source Documents</strong><br>
+    <small>Allowed: PDF, Word, Excel, CSV, JPG, PNG</small><br>
+    <input type="file" id="files" multiple
+      accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.jpg,.jpeg,.png"
+      onchange="addFiles(event)"
+      title="Attach supporting source documents to this adjusting entry">
+  </p>
+  <div id="fileList"></div>
+  <br>
+  <button type="button" id="submitBtn" onclick="submitEntry()"
+    title="Validate and submit this adjusting entry for manager approval">
+    Submit for Approval
+  </button>
+  <button type="button" onclick="resetForm()"
+    title="Clear all fields and start over">
+    Reset
+  </button>
+  <a href="#" onclick="goBack(event)"
+    title="Cancel and return to your dashboard">
+    Cancel
+  </a>
+  <br><br><hr>
+  <!-- ── Existing Adjusting Entries ── -->
+  <h2>Adjusting Entries</h2>
+  <input type="text" id="srch" placeholder="Search account, description, date…"
+    oninput="filterEntries()"
+    title="Search adjusting entries by account, description, or date">
+  <select id="fStat" onchange="filterEntries()"
+    title="Filter adjusting entries by status">
+    <option value="">All Statuses</option>
+    <option value="pending">Pending</option>
+    <option value="approved">Approved</option>
+    <option value="rejected">Rejected</option>
+  </select>
+  <input type="date" id="fFrom" onchange="filterEntries()"
+    title="Show entries from this date onwards">
+  to
+  <input type="date" id="fTo" onchange="filterEntries()"
+    title="Show entries up to this date">
+  <button onclick="clearFilters()"
+    title="Clear all filters and show all adjusting entries">
+    Clear
+  </button>
+  <br><br>
+  <p id="eLoad">Loading…</p>
+  <p id="eEmpty" style="display:none;">No adjusting entries found.</p>
+  <table border="1" cellpadding="8" cellspacing="0" id="eTable" style="display:none; width:100%"
+    title="List of all adjusting journal entries">
+    <thead>
+      <tr>
+        <th title="Date of the adjusting entry">Date</th>
+        <th title="Description and reference">Description</th>
+        <th title="Adjusting entry type">Adj. Type</th>
+        <th title="Accounts affected">Accounts</th>
+        <th title="Total debit amount">Debits</th>
+        <th title="Total credit amount">Credits</th>
+        <th title="Current approval status">Status</th>
+        <th title="User who submitted this entry">Submitted By</th>
+        <th title="Manager rejection reason if rejected">Rejection Comment</th>
+        <th title="View full entry details">View</th>
+      </tr>
+    </thead>
+    <tbody id="eTbody"></tbody>
+  </table>
+  <br>
+  <a href="#" onclick="goBack(event)" title="Return to your dashboard">← Back to Dashboard</a>
+</main>
+<script type="module">
+  import { auth, db } from './firebase-config.js';
+  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  import {
+    collection, getDocs, addDoc, doc, getDoc, query, where, serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+  import { getStorage, ref, uploadBytes, getDownloadURL }
+    from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+  let uid, uname, role;
+  let accounts    = [];   // active accounts from Chart of Accounts
+  let attachments = [];
+  let allEntries  = [];
+  const fmt = v => new Intl.NumberFormat('en-US', {
+    style: 'currency', currency: 'USD', minimumFractionDigits: 2
+  }).format(v);
+  //Auth guard — accountants only
+  onAuthStateChanged(auth, async user => {
+    if (!user) return location.href = 'login.html';
+    uid = user.uid;
+    const ud = (await getDoc(doc(db, 'users', uid))).data();
+    uname = ud.username;
+    role  = ud.role;
+    document.getElementById('uname').textContent = 'Username: ' + uname;
+    if (ud.role === 'manager')       document.getElementById('avatar').src = 'assets/userManager.png';
+    if (ud.role === 'administrator') document.getElementById('avatar').src = 'assets/userAdmin.png';
+    // Set today's date
+    document.getElementById('jeDate').valueAsDate = new Date();
+    // Load only active accounts from Chart of Accounts
+    accounts = (await getDocs(query(collection(db, 'accounts'), where('isActive', '==', true))))
+      .docs.map(d => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => (a.accountNumber || '').localeCompare(b.accountNumber || ''));
+    addLine('debit');
+    addLine('credit');
+    loadEntries();
+  });
+  //Account dropdown options
+  // Only shows accounts from the Chart of Accounts (spec requirement)
+  const acctOpts = () =>
+    '<option value="">— Select account —</option>' +
+    accounts.map(a =>
+      `<option value="${a.id}" data-name="${a.accountName}">
+         ${a.accountNumber} — ${a.accountName}
+       </option>`
+    ).join('');
+  //Add debit/credit line
+  window.addLine = type => {
+    const id  = 'l' + Date.now();
+    const div = document.createElement('div');
+    div.id = id;
+    div.innerHTML = `
+      <select onchange="recalc()" title="Select an account from the Chart of Accounts">${acctOpts()}</select>
+      <input type="number" min="0.01" step="0.01" placeholder="0.00"
+        oninput="recalc()" data-t="${type}"
+        title="Enter the ${type} amount for this line">
+      <button type="button" onclick="rmLine('${id}','${type}')"
+        title="Remove this ${type} line">Remove</button><br><br>`;
+    document.getElementById(type === 'debit' ? 'debitLines' : 'creditLines').appendChild(div);
+    recalc();
+  };
+  window.rmLine = (id, type) => {
+    const cont = document.getElementById(type === 'debit' ? 'debitLines' : 'creditLines');
+    if (cont.children.length <= 1) return showErr('Need at least one ' + type + ' line.');
+    document.getElementById(id).remove();
+    recalc();
+  };
+  //Live balance check
+  window.recalc = () => {
+    const sum  = t => [...document.querySelectorAll(`[data-t="${t}"]`)]
+      .reduce((s, i) => s + (parseFloat(i.value) || 0), 0);
+    const d    = sum('debit'), c = sum('credit'), diff = Math.abs(d - c);
+    document.getElementById('tD').textContent = fmt(d);
+    document.getElementById('tC').textContent = fmt(c);
+    const el   = document.getElementById('balMsg');
+    el.textContent = d > 0 && diff < .005
+      ? '✓ Balanced.'
+      : d === 0
+        ? '⚠ Enter amounts.'
+        : `⚠ Off by ${fmt(diff)}`;
+    el.style.color = diff < .005 && d > 0 ? 'green' : 'red';
+  };
+  //File attachments
+  const allowed = ['pdf','doc','docx','xls','xlsx','csv','jpg','jpeg','png'];
+  window.addFiles = e => {
+    [...e.target.files].forEach(f => {
+      const ext = f.name.split('.').pop().toLowerCase();
+      if (!allowed.includes(ext)) return showErr(`.${ext} not allowed.`);
+      const idx = attachments.length;
+      attachments.push(f);
+      const d = document.createElement('div');
+      d.id = 'f' + idx;
+      d.innerHTML = `📎 ${f.name} <button type="button" onclick="rmFile(${idx})"
+        title="Remove this attachment">Remove</button>`;
+      document.getElementById('fileList').appendChild(d);
+    });
+    e.target.value = '';
+  };
+  window.rmFile = idx => {
+    attachments[idx] = null;
+    document.getElementById('f' + idx)?.remove();
+  };
+  //Submit adjusting entry 
+  window.submitEntry = async () => {
+    hideMsg();
+    const date = document.getElementById('jeDate').value;
+    if (!date) return showErr('Date is required.');
+    // Collect lines — only accounts from Chart of Accounts are selectable
+    const lines = [];
+    for (const type of ['debit', 'credit']) {
+      document.querySelectorAll(`#${type}Lines [data-t]`).forEach(inp => {
+        const row = inp.closest('div');
+        const sel = row.querySelector('select');
+        const amt = parseFloat(inp.value) || 0;
+        if (sel.value && amt > 0) lines.push({
+          type,
+          accountId:   sel.value,
+          accountName: sel.options[sel.selectedIndex].dataset.name,
+          amount:      parseFloat(amt.toFixed(2))
+        });
+      });
+    }
+    const debits  = lines.filter(l => l.type === 'debit');
+    const credits = lines.filter(l => l.type === 'credit');
+    if (!debits.length || !credits.length) {
+      document.getElementById('lineErr').style.display = 'block'; return;
+    }
+    document.getElementById('lineErr').style.display = 'none';
+    const tD = debits.reduce((s, l)  => s + l.amount, 0);
+    const tC = credits.reduce((s, l) => s + l.amount, 0);
+    if (Math.abs(tD - tC) >= .005)
+      return showErr(`Debits (${fmt(tD)}) ≠ Credits (${fmt(tC)}). Difference: ${fmt(Math.abs(tD - tC))}`);
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true; btn.textContent = 'Submitting…';
+    try {
+      // Upload attachments
+      const storage = getStorage();
+      const attMeta = [];
+      for (const f of attachments.filter(Boolean)) {
+        try {
+          const r = ref(storage, `adjusting-attachments/${Date.now()}_${f.name}`);
+          await uploadBytes(r, f);
+          attMeta.push({ name: f.name, url: await getDownloadURL(r) });
+        } catch { attMeta.push({ name: f.name, url: null }); }
+      }
+      // Save to journalEntries collection with entryType: 'adjusting'
+      // Same collection so managerJournalReview.html picks it up automatically
+      // and postToLedger() runs on approval — posting to ledger and updating
+      // account balances which flow through to financial statements
+      const entryRef = await addDoc(collection(db, 'journalEntries'), {
+        entryType:           'adjusting',
+        adjustingType:       document.getElementById('jeType').value || null,
+        date,
+        description:         document.getElementById('jeDesc').value.trim(),
+        reference:           document.getElementById('jeRef').value.trim(),
+        lines,
+        totalDebit:          parseFloat(tD.toFixed(2)),
+        totalCredit:         parseFloat(tC.toFixed(2)),
+        attachments:         attMeta,
+        status:              'pending',
+        submittedBy:         uid,
+        submittedByUsername: uname,
+        createdAt:           serverTimestamp(),
+        rejectionComment:    null,
+      });
+      // Notify manager
+      addDoc(collection(db, 'notifications'), {
+        type:      'ADJUSTING_ENTRY_SUBMITTED',
+        entryId:   entryRef.id,
+        message:   `${uname} submitted an adjusting entry on ${date} for review.`,
+        forRole:   'manager',
+        read:      false,
+        createdAt: serverTimestamp(),
+      }).catch(() => {});
+      showSuccess('✓ Adjusting entry submitted — pending manager approval. Once approved it will be posted to the ledger and financial statements.');
+      resetFormFields();
+      loadEntries();
+    } catch (e) {
+      showErr('Submission failed: ' + e.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Submit for Approval';
+    }
+  };
+  //Reset
+  window.resetForm = () => {
+    if (confirm('Reset form? All entered data will be cleared.')) resetFormFields();
+  };
+  function resetFormFields() {
+    document.getElementById('jeDate').valueAsDate = new Date();
+    ['jeDesc', 'jeRef'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('jeType').value = '';
+    document.getElementById('debitLines').innerHTML  = '';
+    document.getElementById('creditLines').innerHTML = '';
+    document.getElementById('fileList').innerHTML    = '';
+    attachments = [];
+    addLine('debit');
+    addLine('credit');
+    recalc();
+  }
+  window.goBack = e => {
+    e.preventDefault();
+    if (confirm('Go back to dashboard?'))
+      location.href = role === 'manager' ? 'managerDashboard.html' : 'accountantDashboard.html';
+  };
+  //Load existing adjusting entries
+  async function loadEntries() {
+    try {
+      // Only load adjusting entries (entryType === 'adjusting')
+      allEntries = (await getDocs(
+        query(
+          collection(db, 'journalEntries'),
+          where('entryType', '==', 'adjusting')
+        )
+      )).docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
+
+      document.getElementById('eLoad').style.display = 'none';
+      filterEntries();
+    } catch (e) {
+      document.getElementById('eLoad').textContent = 'Load failed: ' + e.message;
+    }
+  }
+  //Filter entries
+  window.filterEntries = () => {
+    const q    = document.getElementById('srch').value.toLowerCase();
+    const s    = document.getElementById('fStat').value;
+    const from = document.getElementById('fFrom').value;
+    const to   = document.getElementById('fTo').value;
+    const rows = allEntries.filter(e =>
+      (!s    || e.status === s) &&
+      (!from || e.date >= from) &&
+      (!to   || e.date <= to)   &&
+      (!q    ||
+        (e.lines||[]).map(l => l.accountName||'').join(' ').toLowerCase().includes(q) ||
+        (e.date||'').includes(q) ||
+        (e.description||'').toLowerCase().includes(q) ||
+        (e.adjustingType||'').toLowerCase().includes(q) ||
+        String(e.totalDebit||'').includes(q)  ||
+        String(e.totalCredit||'').includes(q)
+      )
+    );
+    const empty = document.getElementById('eEmpty');
+    const table = document.getElementById('eTable');
+    if (!rows.length) {
+      table.style.display = 'none'; empty.style.display = 'block'; return;
+    }
+    empty.style.display = 'none'; table.style.display = 'table';
+    document.getElementById('eTbody').innerHTML = rows.map(e => `
+      <tr>
+        <td>${e.date || '—'}</td>
+        <td>${e.description || '—'}${e.reference ? `<br><small>Ref: ${e.reference}</small>` : ''}</td>
+        <td>${e.adjustingType || '—'}</td>
+        <td>${(e.lines||[]).map(l => `${l.type==='debit'?'Dr':'Cr'}: ${l.accountName||l.accountId}`).join('<br>')}</td>
+        <td>${fmt(e.totalDebit  || 0)}</td>
+        <td>${fmt(e.totalCredit || 0)}</td>
+        <td>${e.status || 'pending'}</td>
+        <td>${e.submittedByUsername || '—'}</td>
+        <td style="color:red;">${e.rejectionComment || '—'}</td>
+        <td><a href="viewJournalEntry.html?entryId=${e.id}"
+          title="View the full details of this adjusting entry">View</a></td>
+      </tr>`).join('');
+  };
+  window.clearFilters = () => {
+    ['srch','fFrom','fTo'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('fStat').value = '';
+    filterEntries();
+  };
+  //Helpers
+  function showErr(msg) {
+    const el = document.getElementById('msg');
+    el.textContent = msg; el.style.color = 'red'; el.style.display = 'block';
+  }
+  function showSuccess(msg) {
+    const el = document.getElementById('msg');
+    el.textContent = msg; el.style.color = 'green'; el.style.display = 'block';
+    setTimeout(() => el.style.display = 'none', 8000);
+  }
+  function hideMsg() { document.getElementById('msg').style.display = 'none'; }
+</script>
+</body>
+</html>
