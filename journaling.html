@@ -94,7 +94,7 @@
   import { getStorage, ref, uploadBytes, getDownloadURL }
     from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
-  let uid, uname, role, accounts = [], attachments = [], allEntries = [];
+  let uid, uname, role, accounts = [], attachments = [], allEntries = [], errorMap = null;
   const fmt = v => new Intl.NumberFormat('en-US', { style:'currency', currency:'USD', minimumFractionDigits:2 }).format(v); 
 
   onAuthStateChanged(auth, async user => {
@@ -110,6 +110,7 @@
       .docs.map(d => ({ id: d.id, ...d.data() }))
       .sort((a, b) => a.accountNumber.localeCompare(b.accountNumber));
     addLine('debit'); addLine('credit');
+    errorMap = await pullErrors();
     loadEntries();
   });
 
@@ -129,7 +130,7 @@
 
   window.rmLine = async (id, type) => {
     const cont = document.getElementById(type === 'debit' ? 'debitLines' : 'creditLines');
-    if (cont.children.length <= 1) return showErr(await pullError(1, 'type') + ' Need at least one ' + type + ' line.');
+    if (cont.children.length <= 1) return showErr(getError(errorMap, '1', 'type') + ' Need at least one ' + type + ' line.');
     document.getElementById(id).remove(); recalc();
   };
 
@@ -145,10 +146,9 @@
 
   const allowed = ['pdf','doc','docx','xls','xlsx','csv','jpg','jpeg','png'];
   window.addFiles = async (e) => {
-    const er = await pullError(2, 'type');
     [...e.target.files].forEach(f => {
       const ext = f.name.split('.').pop().toLowerCase();
-      if (!allowed.includes(ext)) return showErr(er + ` .${ext} not allowed.`);
+      if (!allowed.includes(ext)) return showErr(getError(errorMap, '2', 'type') + ` .${ext} not allowed.`);
       const idx = attachments.length;
       attachments.push(f);
       const d = document.createElement('div');
@@ -163,7 +163,7 @@
   window.submitEntry = async () => {
     hideMsg();
     const date = document.getElementById('jeDate').value;
-    if (!date) return showErr(await pullError(3, 'type') + ' Date is required.');
+    if (!date) return showErr(getError(errorMap, '3', 'type') + ' Date is required.');
     const lines = [];
     for (const type of ['debit', 'credit']) {
       document.querySelectorAll(`#${type}Lines [data-t]`).forEach(inp => {
@@ -185,7 +185,7 @@
     document.getElementById('lineErr').style.display = 'none';
     const tD = debits.reduce((s, l) => s + l.amount, 0);
     const tC = credits.reduce((s, l) => s + l.amount, 0);
-    if (Math.abs(tD - tC) >= .005) return showErr(await pullError(4, 'type') + ` Debits (${fmt(tD)}) ≠ Credits (${fmt(tC)}). Difference: ${fmt(Math.abs(tD - tC))}`);
+    if (Math.abs(tD - tC) >= .005) return showErr(getError(errorMap, '4', 'type') + ` Debits (${fmt(tD)}) ≠ Credits (${fmt(tC)}). Difference: ${fmt(Math.abs(tD - tC))}`);
     const btn = document.getElementById('submitBtn');
     btn.disabled = true; btn.textContent = 'Submitting…';
     try {
@@ -215,7 +215,7 @@
       showSuccess('✓ Submitted — pending manager approval.');
       resetFormFields();
       loadEntries();
-    } catch (e) { showErr(await pullError(5, 'type') + ' Submission failed: ' + e.message); }
+    } catch (e) { showErr(getError(errorMap, '5', 'type') + ' Submission failed: ' + e.message); }
     finally { btn.disabled = false; btn.textContent = 'Submit for Approval'; }
   };
 
@@ -290,14 +290,21 @@
     el.textContent = msg; el.style.color = 'red'; el.style.display = 'block';
   }
 
-  async function pullError(id, field) { // Pull field data from error collection
+  async function pullErrors() { // Grab all error documents from Firestore
     try {
-      const querySnap = await getDocs(query(collection(db, 'errors'), where(documentId(), '==', `${id}`)));
-      const error = querySnap.docs[0].data();
-      return error[field];
-    } catch(e) {
-      return e.message;
+      const snap = await getDocs(query(collection(db, 'errors')));
+      return new Map(snap.docs.map(doc => [doc.id, doc.data()]));
+    } catch (e) {
+      console.error('Failed to load errors:', e.message);
+      return new Map();
     }
+  }
+
+  function getError(map, id, field) { // Retrieve field data from specified error id
+    if(!map) return '[Error map not available]';
+    const error = map.get(id);
+    if (!error) return '[Trouble retrieving document]';
+    return error[field] || '[Field not found]';
   }
 
   function showSuccess(msg) {

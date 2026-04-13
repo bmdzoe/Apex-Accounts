@@ -155,7 +155,7 @@
   import { auth, db } from './firebase-config.js';
   import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
   import {
-    collection, getDocs, doc, getDoc, addDoc, updateDoc, serverTimestamp
+    collection, getDocs, doc, getDoc, addDoc, updateDoc, serverTimestamp, query, where, documentId
   } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
   const subcategoryMap = {
     Asset:     ['Current Assets', 'Non-Current Assets', 'Fixed Assets', 'Intangible Assets', 'Investments'],
@@ -166,6 +166,7 @@
   };
   const categoryStartDigit = { Asset:'1', Liability:'2', Equity:'3', Revenue:'4', Expense:'5' };
   const normalSideMap      = { Asset:'Debit', Expense:'Debit', Liability:'Credit', Equity:'Credit', Revenue:'Credit' };
+  let errorMap        = null;
   let editingId     = null;
   let allAccounts   = [];
   let currentUserId = null;
@@ -182,6 +183,7 @@
     else if (ud.role === 'manager')  av.src = 'assets/userManager.png';
     await loadAccountsForDropdown();
     await maybeLoadEditData();
+    errorMap = await pullErrors();
     recalcBalance();
   });
   
@@ -286,7 +288,7 @@
     }).format(val);
   }
  
-  function validate() {
+  async function validate() {
     clearErrors();
     let ok = true;
     const name   = document.getElementById('accountName').value.trim();
@@ -294,21 +296,21 @@
     const desc   = document.getElementById('accountDescription').value.trim();
     const cat    = document.getElementById('accountCategory').value;
     if (!name) {
-      showErr('e-name', 'Account name is required.'); ok = false;
+      showErr('e-name', getError(errorMap, '8', 'type') + ' Account name is required.'); ok = false;
     } else if (allAccounts.find(a => a.accountName === name && a.id !== editingId)) {
-      showErr('e-name', 'An account with this name already exists (Spec #2).'); ok = false;
+      showErr('e-name', getError(errorMap, '9', 'type') + ' An account with this name already exists (Spec #2).'); ok = false;
     }
     if (!number) {
-      showErr('e-number', 'Account number is required.'); ok = false;
+      showErr('e-number', getError(errorMap, '10', 'type') + ' Account number is required.'); ok = false;
     } else if (!/^\d+$/.test(number)) {
-      showErr('e-number', 'Account number must contain digits only — no letters or decimals (Spec #5).'); ok = false;
+      showErr('e-number', getError(errorMap, '11', 'type') + ' Account number must contain digits only — no letters or decimals (Spec #5).'); ok = false;
     } else if (allAccounts.find(a => a.accountNumber === number && a.id !== editingId)) {
-      showErr('e-number', 'This account number is already in use (Spec #2).'); ok = false;
+      showErr('e-number', getError(errorMap, '12', 'type') + ' This account number is already in use (Spec #2).'); ok = false;
     } else if (cat && categoryStartDigit[cat] && number[0] !== categoryStartDigit[cat]) {
-      showErr('e-number', `${cat} account numbers must start with ${categoryStartDigit[cat]}.`); ok = false;
+      showErr('e-number', getError(errorMap, '13', 'type') + ` ${cat} account numbers must start with ${categoryStartDigit[cat]}.`); ok = false;
     }
-    if (!desc) { showErr('e-description', 'Description is required.'); ok = false; }
-    if (!cat)  { showErr('e-category',    'Please select an account category.'); ok = false; }
+    if (!desc) { showErr('e-description', getError(errorMap, '14', 'type') + ' Description is required.'); ok = false; }
+    if (!cat)  { showErr('e-category',    getError(errorMap, '15', 'type') + ' Please select an account category.'); ok = false; }
     return ok;
   }
   function showErr(id, msg) {
@@ -391,10 +393,27 @@
       setTimeout(() => { window.location.href = 'chartOfAccounts.html'; }, 1600);
     } catch (err) {
       const el = document.getElementById('formError');
-      el.textContent = 'Save failed: ' + err.message;
+      el.textContent = getError(errorMap, '16', 'type') + ' Save failed: ' + err.message;
       el.style.display = 'block';
     }
   });
+
+  async function pullErrors() { // Grab all error documents from Firestore
+  try {
+      const snap = await getDocs(query(collection(db, 'errors')));
+      return new Map(snap.docs.map(doc => [doc.id, doc.data()]));
+    } catch (e) {
+      console.error('Failed to load errors:', e.message);
+      return new Map();
+    }
+  }
+
+  function getError(map, id, field) { // Retrieve field data from specified error id
+    if(!map) return '[Error map not available]';
+    const error = map.get(id);
+    if (!error) return '[Trouble retrieving document]';
+    return error[field] || '[Field not found]';
+  }
 </script>
 </body>
 </html>
