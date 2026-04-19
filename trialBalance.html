@@ -215,9 +215,22 @@
             }
           });
         });
-        // Prepare accounts for display, sorted by category and account number
+       // calculates net balance and place correct column
         const accountList = Object.values(accounts)
-          .filter(a => a.debit > 0 || a.credit > 0) // Only show accounts with activity
+          .map(a => {
+            const initial = Number(a.initialBalance || 0);
+            const isDebitNormal = ['Asset', 'Expense'].includes(a.accountCategory);
+            const netBalance = isDebitNormal
+              ? initial + a.debit - a.credit
+              : initial + a.credit - a.debit;
+            return {
+              ...a,
+              
+              debit: isDebitNormal ? parseFloat(Math.abs(netBalance).toFixed(2)) : 0,
+              credit: !isDebitNormal ? parseFloat(Math.abs(netBalance).toFixed(2)) : 0
+            };
+          })
+          .filter(a => a.debit > 0 || a.credit > 0)
           .sort((a, b) => {
             const catSort = (a.accountCategory || '').localeCompare(b.accountCategory || '');
             return catSort !== 0 ? catSort : (a.accountNumber || '').localeCompare(b.accountNumber || '');
@@ -226,12 +239,12 @@
         const totalCredit = parseFloat(accountList.reduce((s, a) => s + a.credit, 0).toFixed(2));
         const isBalanced  = Math.abs(totalDebit - totalCredit) < 0.01;
         reportData = { dateFrom, dateTo, accountList, totalDebit, totalCredit, isBalanced };
-        // Render report header
+        // report header
         document.getElementById('reportPeriodLabel').textContent =
           `Period End: ${fmtDate(dateTo)}`;
         document.getElementById('reportGeneratedLabel').textContent =
           `Generated: ${new Date().toLocaleString()} · ${document.getElementById('headerUsername').textContent}`;
-        // Render table rows
+       
         const tbody = document.getElementById('accountsBody');
         tbody.innerHTML = '';
         if (!accountList.length) {

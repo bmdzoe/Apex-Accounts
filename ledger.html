@@ -157,7 +157,7 @@
       allEntries = allEntries.map(entry => {
         const debit = Number(entry.debit || 0);
         const credit = Number(entry.credit || 0);
-        if(accountData.normalSide === 'debit') { 
+        if((accountData.normalSide || '').toLowerCase() === 'debit') { //case mismatch
           running = running + debit - credit
         } else {
           running = running + credit - debit;
