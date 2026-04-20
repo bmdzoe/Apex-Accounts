@@ -7,20 +7,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <script>
-    function openCalendar() {
-      window.open(
-        "calendar.html",
-        "CalendarPopup",
-        "width=500,height=550,left=100,top=100,resizable=yes,scrollbars=no"
-      );
-    }
-    function openHelp() {
-      window.open(
-        "help.html",
-        "HelpPopup",
-        "width=700,height=600,left=120,top=80,resizable=yes,scrollbars=yes"
-      );
-    }
+    function openCalendar() { window.open("calendar.html", "CalendarPopup", "width=500,height=550,left=100,top=100,resizable=yes,scrollbars=no");}
+    function openHelp() { window.open("help.html", "HelpPopup", "width=700,height=600,left=120,top=80,resizable=yes,scrollbars=yes"); }
   </script>
 </head>
 <body>
@@ -37,14 +25,38 @@
     <a href="profile.html" title="Open your user profile">
       <img src="assets/userAccountant.png" alt="User Profile" width="40" height="40">
     </a>
-    <a href="login.html" title="Log out of the system">Logout</a>
+    <a href="login.html" onclick="localStorage.clear()" title="Log out of the system">Logout</a>
   </div>
 </header>
 <main>
   <h1>Accountant Dashboard</h1>
+  <!-- Important Messages -->
+  <div id="pendingAlert"    style="display:none; border:1px solid #c9a84c; border-radius:6px; padding:12px 16px; margin-bottom:10px;">
+    ⏳ <strong>Pending Journal Entries:</strong> <span id="pendingCount"></span>
+    <a href="accountantJournalReview.html" style="margin-left:12px;" title="Review pending journal entries">Review Now →</a>
+  </div>
+  <div id="pendingAdjAlert" style="display:none; border:1px solid #c9a84c; border-radius:6px; padding:12px 16px; margin-bottom:10px;">
+    ⏳ <strong>Pending Adjusting Entries:</strong> <span id="pendingAdjCount"></span>
+    <a href="accountantJournalReview.html" style="margin-left:12px;" title="Review pending adjusting entries">Review Now →</a>
+  </div>
+  <div id="rejectedSection" style="display:none; border:1px solid #d95c5c; border-radius:6px; padding:12px 16px; margin-bottom:20px;">
+    <strong style="color:#d95c5c;">✗ Recently Rejected Entries:</strong>
+    <ul id="rejectedList" style="margin:8px 0 0 16px; font-size:0.88rem;"></ul>
+  </div>
+  <!-- Ratio Cards -->
+  <h2>Financial Ratio Analysis</h2>
+  <p style="font-size:0.85rem; margin-bottom:12px;">
+    <span style="color:green;">■ Green = good</span> &nbsp;
+    <span style="color:#c9a84c;">■ Yellow = borderline</span> &nbsp;
+    <span style="color:red;">■ Red = needs review</span>
+  </p>
+  <p id="ratioLoading">Loading ratios…</p>
+  <div id="ratioCards" style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:28px;"></div>
+  <!-- Nav -->
   <nav>
     <ul>
       <li><a href="chartOfAccounts.html" title="View the chart of accounts">View Chart of Accounts</a></li>
+      <li><a href="accountantJournalReview.html"  title="Approve or reject journal entries">Review Journal Entries <span id="navBadge" style="display:none; background:#c9a84c; color:#080b0f; border-radius:10px; padding:1px 8px; font-size:0.72rem; font-weight:700;"></span></a></li>
       <li><a href="journaling.html" title="Create and view journal entries">Journaling</a></li>
       <li><a href="viewUsersReport.html" title="View reports available to manager">View Reports</a></li>
       <li><a href="expiredPasswordsReport.html" title="View users with expired passwords">Expired Passwords Report</a></li>
@@ -56,7 +68,7 @@
 <script type="module">
   import { auth, db } from './firebase-config.js';
   import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-  import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+  import { doc, getDoc, getDocs, collection, query, where} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
   onAuthStateChanged(auth, async (user) => {
     if (user) {
       const docRef = doc(db, "users", user.uid);
@@ -64,6 +76,8 @@
       if (docSnap.exists()) {
         const userData = docSnap.data();
         document.getElementById('displayUsername').innerText = `Username: ${userData.username}`;
+        loadMessages();
+        loadRatios();
       } else {
         console.log("No user");
       }
@@ -71,6 +85,82 @@
       window.location.href = "login.html";
     }
   });
+
+  //Messages
+  async function loadMessages() {
+    try {
+      const all = (await getDocs(query(collection(db, "journalEntries"), where("status", "==", "pending"))))
+        .docs.map(d => d.data());
+      const reg = all.filter(e => e.entryType !== "adjusting");
+      const adj = all.filter(e => e.entryType === "adjusting");
+      if (reg.length) {
+        document.getElementById("pendingAlert").style.display = "block";
+        document.getElementById("pendingCount").textContent   = reg.length;
+        document.getElementById("navBadge").style.display     = "inline";
+        document.getElementById("navBadge").textContent       = all.length;
+      }
+      if (adj.length) {
+        document.getElementById("pendingAdjAlert").style.display = "block";
+        document.getElementById("pendingAdjCount").textContent   = adj.length;
+      }
+      const rejected = (await getDocs(query(collection(db, "journalEntries"), where("status", "==", "rejected"))))
+        .docs.map(d => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0))
+        .slice(0, 5);
+      if (rejected.length) {
+        document.getElementById("rejectedSection").style.display = "block";
+        document.getElementById("rejectedList").innerHTML = rejected.map(e => `
+          <li><strong>${e.date || "—"}</strong> — ${e.description || "No description"}
+          — by ${e.submittedByUsername || "—"}
+          ${e.rejectionComment ? `<br><small style="color:red;">Reason: ${e.rejectionComment}</small>` : ""}
+          &nbsp;<a href="viewJournalEntry.html?entryId=${e.id}" title="View this rejected entry">View</a></li>
+        `).join("");
+      }
+    } catch (err) { console.error("Messages error:", err.message); }
+  }
+  //Ratios
+  async function loadRatios() {
+    try {
+      const accounts = (await getDocs(collection(db, "accounts"))).docs.map(d => d.data());
+      const bal  = cat => accounts.filter(a => a.accountCategory === cat).reduce((s, a) => s + Math.abs(Number(a.balance || 0)), 0);
+      const sub  = (cat, kw) => accounts.filter(a => a.accountCategory === cat && (a.accountSubcategory || "").includes(kw)).reduce((s, a) => s + Math.abs(Number(a.balance || 0)), 0);
+      const name = kw => accounts.filter(a => (a.accountName || "").toLowerCase().includes(kw)).reduce((s, a) => s + Math.abs(Number(a.balance || 0)), 0);
+      const cA  = sub("Asset", "Current");
+      const cL  = sub("Liability", "Current");
+      const inv = name("inventory");
+      const tA  = bal("Asset");
+      const tL  = bal("Liability");
+      const tE  = bal("Equity");
+      const rev = bal("Revenue");
+      const exp = bal("Expense");
+      const cogs= accounts.filter(a => (a.accountSubcategory||"").includes("COGS") || (a.accountName||"").toLowerCase().includes("cost of goods")).reduce((s,a) => s + Math.abs(Number(a.balance||0)), 0);
+      const ni  = rev - exp;
+      // 6 ratios: [label, value, format, color logic, benchmark, tooltip]
+      const ratios = [
+        ["Current Ratio",       cL  > 0 ? cA / cL                   : null, v => v.toFixed(2),       v => v >= 2 ? "green" : v >= 1 ? "#c9a84c" : "red",  "Good ≥ 2 · Warning 1–2 · Poor < 1",    "Current Assets ÷ Current Liabilities"],
+        ["Quick Ratio",         cL  > 0 ? (cA - inv) / cL           : null, v => v.toFixed(2),       v => v >= 1 ? "green" : v >= .5 ? "#c9a84c" : "red", "Good ≥ 1 · Warning 0.5–1 · Poor < 0.5","(Current Assets − Inventory) ÷ Current Liabilities"],
+        ["Debt-to-Equity",      tE  > 0 ? tL / tE                   : null, v => v.toFixed(2),       v => v < 1  ? "green" : v <= 2 ? "#c9a84c" : "red",  "Good < 1 · Warning 1–2 · Poor > 2",    "Total Liabilities ÷ Total Equity"],
+        ["Net Profit Margin",   rev > 0 ? (ni / rev) * 100          : null, v => v.toFixed(2) + "%", v => v >= 20 ? "green" : v >= 5 ? "#c9a84c" : "red", "Good ≥ 20% · Warning 5–20% · Poor < 5%","Net Income ÷ Revenue × 100"],
+        ["Return on Assets",    tA  > 0 ? (ni / tA) * 100           : null, v => v.toFixed(2) + "%", v => v >= 10 ? "green" : v >= 5 ? "#c9a84c" : "red", "Good ≥ 10% · Warning 5–10% · Poor < 5%","Net Income ÷ Total Assets × 100"],
+        ["Gross Profit Margin", rev > 0 ? ((rev - cogs) / rev) * 100: null, v => v.toFixed(2) + "%", v => v >= 40 ? "green" : v >= 20 ? "#c9a84c" : "red","Good ≥ 40% · Warning 20–40% · Poor < 20%","(Revenue − COGS) ÷ Revenue × 100"],
+      ];
+      document.getElementById("ratioLoading").style.display = "none";
+      document.getElementById("ratioCards").innerHTML = ratios.map(([label, val, fmt, colorFn, bench, tip]) => {
+        const color  = val === null ? "#6b82a8" : colorFn(val);
+        const status = val === null ? "No Data" : color === "green" ? "● Good" : color === "#c9a84c" ? "● Borderline" : "● Needs Review";
+        return `
+          <div style="border:2px solid ${color}; border-radius:8px; padding:16px 20px; min-width:160px; flex:1;" title="${tip}">
+            <div style="font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; margin-bottom:6px;">${label}</div>
+            <div style="font-size:1.8rem; font-weight:700; font-family:'DM Mono',monospace; color:${color};">${val === null ? "N/A" : fmt(val)}</div>
+            <div style="font-size:0.75rem; color:${color}; font-weight:600; margin:4px 0;">${status}</div>
+            <div style="font-size:0.68rem; color:#6b82a8;">${bench}</div>
+          </div>`;
+      }).join("");
+
+    } catch (err) {
+      document.getElementById("ratioLoading").textContent = "Failed to load ratios: " + err.message;
+    }
+  }
 </script>
 </body>
 </html>

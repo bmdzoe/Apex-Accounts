@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Journal Entry Review – Apex Accounts</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="header-bar">
+  <img src="assets/logo.png" alt="Logo" width="120">
+  <div class="top-services">
+    <span onclick="window.open('calendar.html','Cal','width=500,height=550')">Calendar</span>
+    <span onclick="location.href='chartOfAccounts.html'">Chart of Accounts</span>
+    <span onclick="location.href='journaling.html'">Journaling</span>
+    <span onclick="window.open('help.html','Help','width=700,height=600,scrollbars=yes')">Help</span>
+  </div>
+  <div class="user-area">
+    <span id="uname">Username: </span>
+    <a href="profile.html"><img src="assets/userAccountant.png" width="40" height="40" alt="Profile"></a>
+    <a href="login.html" onclick="localStorage.clear()">Logout</a>
+  </div>
+</header>
+<main>
+  <h1>Journal Entry Review</h1>
+  <p>
+    <button type="button" onclick="setTab('pending')"  id="tab-pending">Pending (<span id="count-pending">0</span>)</button>
+    <button type="button" onclick="setTab('approved')" id="tab-approved">Approved (<span id="count-approved">0</span>)</button>
+    <button type="button" onclick="setTab('rejected')" id="tab-rejected">Rejected (<span id="count-rejected">0</span>)</button>
+    <button type="button" onclick="setTab('all')"      id="tab-all">All</button>
+  </p>
+  <input type="text"  id="srch"  placeholder="Search account, amount, date…" oninput="applyFilters()">
+  <input type="date"  id="fFrom" onchange="applyFilters()">
+  <input type="date"  id="fTo"   onchange="applyFilters()">
+  <button onclick="clearFilters()">Clear</button>
+  <br><br>
+  <p id="loadingMsg">Loading journal entries…</p>
+  <p id="emptyMsg"   style="display:none">No entries found.</p>
+  <table border="1" cellpadding="8" cellspacing="0" id="entriesTable" style="display:none; width:100%">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Description</th>
+        <th>Accounts</th>
+        <th>Debits</th>
+        <th>Credits</th>
+        <th>Submitted By</th>
+        <th>Status</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="entriesBody"></tbody>
+  </table>
+  <br>
+  <div id="reviewPanel" style="display:none">
+    <hr>
+    <h2 id="panelTitle">Review Entry</h2>
+    <p id="panelMeta"></p>
+    <table border="1" cellpadding="6" cellspacing="0" id="panelLinesTable" style="width:100%">
+      <thead>
+        <tr><th>Type</th><th>Account</th><th>Amount</th></tr>
+      </thead>
+      <tbody id="panelLines"></tbody>
+    </table>
+    <p>
+      Total Debits: <strong id="panelTotalDebit"></strong> &nbsp;
+      Total Credits: <strong id="panelTotalCredit"></strong>
+    </p>
+    <div id="panelAttachments"></div>
+    <div id="decisionRecord" style="display:none">
+      <br><p id="decisionText"></p>
+    </div>
+    <br>
+    <button type="button" onclick="closePanel()">Close</button>
+  </div>
+  <br>
+  <a href="accountantDashboard.html">← Back to Dashboard</a>
+</main>
+<script type="module">
+  import { auth, db } from './firebase-config.js';
+  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  import { collection, getDocs, doc, getDoc, updateDoc, addDoc, query, orderBy, serverTimestamp, writeBatch, where }
+  from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+  
+  let uid, uname, allEntries = [], filteredEntries = [], activeTab = 'pending', selectedEntryId = null, errorMap = null;
+  const fmt = v => new Intl.NumberFormat('en-US', { style:'currency', currency:'USD', minimumFractionDigits:2 }).format(v);
+  
+  onAuthStateChanged(auth, async user => {
+    if (!user) return location.href = 'login.html';
+    uid = user.uid;
+    const ud = (await getDoc(doc(db, 'users', uid))).data();
+    if (ud.role !== 'accountant') return location.href = 'login.html';
+    uname = ud.username;
+    document.getElementById('uname').textContent = 'Username: ' + uname;
+    errorMap = await pullErrors();
+    loadEntries();
+  });
+
+  async function loadEntries() {
+    try {
+      allEntries = (await getDocs(query(collection(db, 'journalEntries'), orderBy('createdAt', 'desc'))))
+        .docs.map(d => ({ id: d.id, ...d.data() }));
+      updateCounts();
+      document.getElementById('loadingMsg').style.display = 'none';
+      applyFilters();
+    } catch (e) {
+      document.getElementById('loadingMsg').textContent = getError(errorMap, '6', 'type') + ' Failed to load: ' + e.message;
+    }
+  }
+
+  function updateCounts() {
+    ['pending','approved','rejected'].forEach(s =>
+      document.getElementById('count-' + s).textContent = allEntries.filter(e => e.status === s).length
+    );
+  }
+
+  window.setTab = tab => {
+    activeTab = tab;
+    applyFilters();
+  };
+
+  window.applyFilters = () => {
+    const q    = document.getElementById('srch').value.toLowerCase();
+    const from = document.getElementById('fFrom').value;
+    const to   = document.getElementById('fTo').value;
+    filteredEntries = allEntries.filter(e =>
+      (activeTab === 'all' || e.status === activeTab) &&
+      (!from || e.date >= from) && (!to || e.date <= to) &&
+      (!q || (e.lines||[]).map(l => l.accountName||'').join(' ').toLowerCase().includes(q) ||
+             (e.date||'').includes(q) || (e.description||'').toLowerCase().includes(q) ||
+             String(e.totalDebit||'').includes(q) || String(e.totalCredit||'').includes(q) ||
+             (e.submittedByUsername||'').toLowerCase().includes(q))
+    );
+    renderTable();
+  };
+
+  window.clearFilters = () => {
+    ['srch','fFrom','fTo'].forEach(id => document.getElementById(id).value = '');
+    applyFilters();
+  };
+
+  function renderTable() {
+    const empty = document.getElementById('emptyMsg');
+    const table = document.getElementById('entriesTable');
+    if (!filteredEntries.length) { table.style.display = 'none'; empty.style.display = 'block'; return; }
+    empty.style.display = 'none'; table.style.display = 'table';
+    document.getElementById('entriesBody').innerHTML = filteredEntries.map(e => `
+      <tr>
+        <td>${e.date||'—'}</td>
+        <td>${e.description||'—'}${e.reference ? `<br><small>Ref: ${e.reference}</small>` : ''}</td>
+        <td>${(e.lines||[]).map(l => `${l.type==='debit'?'Dr':'Cr'}: ${l.accountName||l.accountId}`).join('<br>')}</td>
+        <td>${fmt(e.totalDebit||0)}</td>
+        <td>${fmt(e.totalCredit||0)}</td>
+        <td>${e.submittedByUsername||'—'}</td>
+        <td>${e.status||'pending'}</td>
+        <td><button type="button" onclick="openPanel('${e.id}')">View</button></td>
+      </tr>`).join('');
+  }
+
+  window.openPanel = entryId => {
+    const entry = allEntries.find(e => e.id === entryId);
+    if (!entry) return;
+    selectedEntryId = entryId;
+    document.getElementById('panelTitle').textContent = `Entry — ${entry.date||''}${entry.reference ? ' · ' + entry.reference : ''}`;
+    document.getElementById('panelMeta').textContent  = `Submitted by: ${entry.submittedByUsername||'—'} · Status: ${entry.status}${entry.description ? ' · ' + entry.description : ''}`;
+    document.getElementById('panelLines').innerHTML = (entry.lines||[]).map(l => `
+      <tr>
+        <td>${l.type}</td>
+        <td>${l.accountName||l.accountId}</td>
+        <td>${fmt(l.amount||0)}</td>
+      </tr>`).join('');
+    document.getElementById('panelTotalDebit').textContent  = fmt(entry.totalDebit||0);
+    document.getElementById('panelTotalCredit').textContent = fmt(entry.totalCredit||0);
+    const attArea = document.getElementById('panelAttachments');
+    attArea.innerHTML = (entry.attachments||[]).length
+      ? '<p><strong>Attachments:</strong> ' + entry.attachments.map(a =>
+          a.url ? `<a href="${a.url}" target="_blank">📎 ${a.name}</a>` : `📎 ${a.name}`
+        ).join(', ') + '</p>'
+      : '';
+    const decision = document.getElementById('decisionRecord');
+    if (entry.status === 'pending') {
+    document.getElementById('decisionText').textContent = '...Entry pending since ' + (entry.createdAt ? new Date(entry.createdAt.seconds * 1000).toLocaleDateString('en-US') : '—');
+    document.getElementById('decisionText').style.color = 'orangered';
+    } else {
+      decision.style.display = 'block';
+      const text = entry.status === 'approved'
+        ? `✓ Approved by ${entry.reviewedByUsername||'manager'} on ${entry.reviewedAt||'—'}.`
+        : `✗ Rejected by ${entry.reviewedByUsername||'manager'} on ${entry.reviewedAt||'—'}. Reason: ${entry.rejectionComment||'—'}`;
+      document.getElementById('decisionText').textContent = text;
+      document.getElementById('decisionText').style.color = entry.status === 'approved' ? 'green' : 'red';
+    }
+    decision.style.display = 'block';
+    document.getElementById('reviewPanel').style.display = 'block';
+    document.getElementById('reviewPanel').scrollIntoView({ behavior: 'smooth' });
+  };
+
+  window.closePanel = () => {
+    document.getElementById('reviewPanel').style.display = 'none';
+    selectedEntryId = null;
+  };
+
+  async function pullErrors() { // Grab all error documents from Firestore
+  try {
+      const snap = await getDocs(query(collection(db, 'errors')));
+      return new Map(snap.docs.map(doc => [doc.id, doc.data()]));
+    } catch (e) {
+      console.error('Failed to load errors:', e.message);
+      return new Map();
+    }
+  }
+
+  function getError(map, id, field) { // Retrieve field data from specified error id
+    if(!map) return '[Error map not available]';
+    const error = map.get(id);
+    if (!error) return '[Trouble retrieving document]';
+    return error[field] || '[Field not found]';
+  }
+</script>
+</body> 
+</html>
