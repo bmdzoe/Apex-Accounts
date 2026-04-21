@@ -132,7 +132,7 @@
     </table>
   </div>
 
-  <div id="pagRow" style="display:none; margin-top:10px; display:flex; align-items:center; justify-content:space-between;">
+  <div id="pagRow" style="display:none; margin-top:10px; align-items:center; justify-content:space-between;">
     <span id="pagInfo"></span>
     <div id="pagBtns"></div>
   </div>
@@ -184,41 +184,57 @@
 
   const PAGE_SIZE = 15;
 
+  window.goToDashboard = function (event) {
+    if (event) event.preventDefault();
+
+    if (userRole === 'administrator') {
+      window.location.href = 'adminDashboard.html';
+    } else if (userRole === 'manager') {
+      window.location.href = 'managerDashboard.html';
+    } else {
+      window.location.href = 'accountantDashboard.html';
+    }
+  };
+
   onAuthStateChanged(auth, async (user) => {
-    if (!user) {
-      window.location.href = 'login.html';
-      return;
+    try {
+      if (!user) {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      currentUserId = user.uid;
+
+      const snap = await getDoc(doc(db, 'users', user.uid));
+      if (!snap.exists()) {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      const ud = snap.data();
+      userRole = ud.role || '';
+
+      const usernameEl = document.getElementById('displayUsername');
+      if (usernameEl) {
+        usernameEl.textContent = 'Username: ' + (ud.username || '');
+      }
+
+      const avatarEl = document.getElementById('userAvatar');
+      if (avatarEl) {
+        if (ud.role === 'administrator') avatarEl.src = 'assets/userAdmin.png';
+        else if (ud.role === 'manager') avatarEl.src = 'assets/userManager.png';
+        else avatarEl.src = 'assets/userAccountant.png';
+      }
+
+      if (ud.role === 'administrator') {
+        const addBtn = document.getElementById('addAccountBtn');
+        if (addBtn) addBtn.style.display = 'inline-block';
+      }
+
+      loadAccounts();
+    } catch (err) {
+      document.getElementById('loadingMsg').textContent = 'Failed to initialize page: ' + err.message;
     }
-
-    currentUserId = user.uid;
-
-    const snap = await getDoc(doc(db, 'users', user.uid));
-    if (!snap.exists()) {
-      window.location.href = 'login.html';
-      return;
-    }
-
-    const ud = snap.data();
-    userRole = ud.role || '';
-
-    const usernameEl = document.getElementById('displayUsername');
-    if (usernameEl) {
-      usernameEl.textContent = 'Username: ' + (ud.username || '');
-    }
-
-    const avatarEl = document.getElementById('userAvatar');
-    if (avatarEl) {
-      if (ud.role === 'administrator') avatarEl.src = 'assets/userAdmin.png';
-      else if (ud.role === 'manager') avatarEl.src = 'assets/userManager.png';
-      else avatarEl.src = 'assets/userAccountant.png';
-    }
-
-    if (ud.role === 'administrator') {
-      const addBtn = document.getElementById('addAccountBtn');
-      if (addBtn) addBtn.style.display = 'inline-block';
-    }
-
-    loadAccounts();
   });
 
   async function loadAccounts() {
@@ -273,8 +289,9 @@
   };
 
   window.sortBy = function (col) {
-    if (sortCol === col) sortAsc = !sortAsc;
-    else {
+    if (sortCol === col) {
+      sortAsc = !sortAsc;
+    } else {
       sortCol = col;
       sortAsc = true;
     }
