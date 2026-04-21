@@ -243,11 +243,14 @@
     addLine('debit'); addLine('credit'); recalc();
   }
 
-  window.goBack = e => {
-    e.preventDefault();
-    if (confirm('Go back to dashboard?'))
-      location.href = role === 'manager' ? 'managerDashboard.html' : 'accountantDashboard.html';
-  };
+window.goBack = e => {
+  e.preventDefault();
+  if (!confirm('Go back to dashboard?')) return;
+
+  if (role === 'manager') location.href = 'managerDashboard.html';
+  else if (role === 'administrator') location.href = 'adminDashboard.html';
+  else location.href = 'accountantDashboard.html';
+};
 
   async function loadEntries() {
     try {
