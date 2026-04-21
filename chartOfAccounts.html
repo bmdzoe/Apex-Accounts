@@ -184,18 +184,6 @@
 
   const PAGE_SIZE = 15;
 
-  window.goToDashboard = function (event) {
-    if (event) event.preventDefault();
-
-    if (userRole === 'administrator') {
-      window.location.href = 'adminDashboard.html';
-    } else if (userRole === 'manager') {
-      window.location.href = 'managerDashboard.html';
-    } else {
-      window.location.href = 'accountantDashboard.html';
-    }
-  };
-
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
       window.location.href = 'login.html';
@@ -210,21 +198,27 @@
       return;
     }
 
-const ud = snap.data();
-userRole = ud.role || '';
+    const ud = snap.data();
+    userRole = ud.role || '';
 
-document.getElementById('displayUsername').textContent = 'Username: ' + (ud.username || '');
+    const usernameEl = document.getElementById('displayUsername');
+    if (usernameEl) {
+      usernameEl.textContent = 'Username: ' + (ud.username || '');
+    }
 
-const av = document.getElementById('userAvatar');
-if (ud.role === 'administrator') av.src = 'assets/userAdmin.png';
-else if (ud.role === 'manager') av.src = 'assets/userManager.png';
-else av.src = 'assets/userAccountant.png';
+    const avatarEl = document.getElementById('userAvatar');
+    if (avatarEl) {
+      if (ud.role === 'administrator') avatarEl.src = 'assets/userAdmin.png';
+      else if (ud.role === 'manager') avatarEl.src = 'assets/userManager.png';
+      else avatarEl.src = 'assets/userAccountant.png';
+    }
 
-if (ud.role === 'administrator') {
-  document.getElementById('addAccountBtn').style.display = 'inline-block';
-}
+    if (ud.role === 'administrator') {
+      const addBtn = document.getElementById('addAccountBtn');
+      if (addBtn) addBtn.style.display = 'inline-block';
+    }
 
-loadAccounts();
+    loadAccounts();
   });
 
   async function loadAccounts() {
@@ -249,6 +243,7 @@ loadAccounts();
   function populateSubcategoryFilter() {
     const subs = [...new Set(allAccounts.map(a => a.accountSubcategory).filter(Boolean))].sort();
     const sel = document.getElementById('filterSubcategory');
+    sel.innerHTML = '<option value="">All Subcategories</option>';
 
     subs.forEach(s => {
       const o = document.createElement('option');
@@ -339,7 +334,6 @@ loadAccounts();
       const bal = Number(a.balance ?? 0);
       const balFmt = fmtMoney(bal, a.currency || 'USD');
       const status = a.isActive !== false ? 'Active' : 'Inactive';
-
       const safeName = (a.accountName || '').replace(/'/g, "\\'");
 
       const adminBtns = isAdmin ? `
