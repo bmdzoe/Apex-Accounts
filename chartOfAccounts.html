@@ -210,8 +210,8 @@
       return;
     }
 
-    const ud = snap.data();
-    userRole = ud.role || '';
+const ud = snap.data();
+userRole = ud.role || '';
 
 document.getElementById('displayUsername').textContent = 'Username: ' + (ud.username || '');
 
@@ -220,11 +220,11 @@ if (ud.role === 'administrator') av.src = 'assets/userAdmin.png';
 else if (ud.role === 'manager') av.src = 'assets/userManager.png';
 else av.src = 'assets/userAccountant.png';
 
-    if (ud.role === 'administrator') {
-      document.getElementById('addAccountBtn').style.display = 'inline-block';
-    }
+if (ud.role === 'administrator') {
+  document.getElementById('addAccountBtn').style.display = 'inline-block';
+}
 
-    loadAccounts();
+loadAccounts();
   });
 
   async function loadAccounts() {
