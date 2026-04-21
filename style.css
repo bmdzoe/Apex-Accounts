@@ -527,3 +527,21 @@ html, body {
   width: 100%;
 }
 
+#ratioCards > div {
+    background: var(--surface-2);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+#ratioCards > div:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-card);
+}
+
+#ratioCards + p, 
+h2 + p {
+    color: var(--text-muted);
+}
+
+#ratioCards > div > div:last-child {
+    color: var(--text-dim) !important;
+}
